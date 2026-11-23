@@ -518,6 +518,50 @@ body{
 }
 
 /* ==========================
+   Smartphone (小さめの操作ボタン)
+========================== */
+
+@media screen and (max-width: 767px){
+
+    #upBtn{
+
+        width:68px;
+        height:68px;
+
+        left:18px;
+        bottom:104px;
+
+        font-size:26px;
+
+    }
+
+    #downBtn{
+
+        width:68px;
+        height:68px;
+
+        left:18px;
+        bottom:20px;
+
+        font-size:26px;
+
+    }
+
+    #fireBtn{
+
+        width:92px;
+        height:92px;
+
+        right:20px;
+        bottom:24px;
+
+        font-size:22px;
+
+    }
+
+}
+
+/* ==========================
    iPad Landscape
 ========================== */
 
