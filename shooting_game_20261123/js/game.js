@@ -70,6 +70,7 @@ function playSound(freq, duration = 0.08) {
     if (audioCtx.state === "suspended") {
         audioCtx.resume();
     }
+    if (audioCtx.state !== "running") return;
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -90,6 +91,10 @@ function playSound(freq, duration = 0.08) {
 
 function startBGM() {
     if (bgmOsc1) return;
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
 
     bgmOsc1 = audioCtx.createOscillator();
     bgmOsc2 = audioCtx.createOscillator();
@@ -133,8 +138,10 @@ function stopBGM() {
 
     if (!bgmOsc1) return;
 
-    bgmOsc1.stop();
-    bgmOsc2.stop();
+    try {
+        bgmOsc1.stop();
+        bgmOsc2.stop();
+    } catch (e) {}
     bgmOsc1 = null;
     bgmOsc2 = null;
     bgmGain = null;
@@ -142,6 +149,10 @@ function stopBGM() {
 
 function startBossBGM() {
     if (bossOsc1) return;
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
 
     bossOsc1 = audioCtx.createOscillator();
     bossOsc2 = audioCtx.createOscillator();
@@ -182,8 +193,10 @@ function stopBossBGM() {
 
     if (!bossOsc1) return;
 
-    bossOsc1.stop();
-    bossOsc2.stop();
+    try {
+        bossOsc1.stop();
+        bossOsc2.stop();
+    } catch (e) {}
     bossOsc1 = null;
     bossOsc2 = null;
     bossGain = null;
@@ -254,7 +267,18 @@ const stars = [];
 
 initStars();
 
+function clearBossTimer() {
+    if (bossAttackInterval) {
+        clearInterval(bossAttackInterval);
+        bossAttackInterval = null;
+    }
+}
+
 startBtn.addEventListener("click", () => {
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
     titleScreen.classList.add("hidden");
 
     player.hp = player.maxHp;
@@ -266,10 +290,7 @@ startBtn.addEventListener("click", () => {
     bossSpawned = false;
     isSpawningBoss = false;
 
-    if (bossAttackInterval) {
-        clearInterval(bossAttackInterval);
-        bossAttackInterval = null;
-    }
+    clearBossTimer();
 
     bullets.length = 0;
     enemies.length = 0;
@@ -292,22 +313,27 @@ startBtn.addEventListener("click", () => {
 });
 
 /* ==========================
-   SHAKE & EXPLOSION
+   SHAKE & EXPLOSION（iPad負荷軽減版）
 ========================== */
+const MAX_EXPLOSIONS = 160;
+
 function startShake(power, duration) {
-    shakePower = power;
-    shakeTime = duration;
+    shakePower = Math.max(shakePower, power);
+    shakeTime = Math.max(shakeTime, duration);
 }
 
-function createExplosion(x, y, color = "#ff9900") {
-    for (let i = 0; i < 20; i++) {
+function createExplosion(x, y, color = "#ff9900", count = 16) {
+    for (let i = 0; i < count; i++) {
+        if (explosions.length >= MAX_EXPLOSIONS) {
+            explosions.shift();
+        }
         explosions.push({
             x,
             y,
             dx: (Math.random() - 0.5) * 8,
             dy: (Math.random() - 0.5) * 8,
             size: Math.random() * 8 + 4,
-            life: 30,
+            life: 26,
             color
         });
     }
@@ -332,20 +358,42 @@ window.addEventListener("keyup", e => {
     if (e.key === "ArrowDown") keys.down = false;
 });
 
-document.getElementById("fireBtn")?.addEventListener("touchstart", shoot);
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        keys.up = false;
+        keys.down = false;
+    }
+});
+
+document.getElementById("fireBtn")?.addEventListener("touchstart", e => {
+    e.preventDefault();
+    shoot();
+}, { passive: false });
+
 canvas.addEventListener("click", shoot);
 
-document.getElementById("upBtn")?.addEventListener("touchstart", () => {
+const upBtn = document.getElementById("upBtn");
+const downBtn = document.getElementById("downBtn");
+
+upBtn?.addEventListener("touchstart", e => {
+    e.preventDefault();
     keys.up = true;
+}, { passive: false });
+upBtn?.addEventListener("touchend", () => {
+    keys.up = false;
 });
-document.getElementById("upBtn")?.addEventListener("touchend", () => {
+upBtn?.addEventListener("touchcancel", () => {
     keys.up = false;
 });
 
-document.getElementById("downBtn")?.addEventListener("touchstart", () => {
+downBtn?.addEventListener("touchstart", e => {
+    e.preventDefault();
     keys.down = true;
+}, { passive: false });
+downBtn?.addEventListener("touchend", () => {
+    keys.down = false;
 });
-document.getElementById("downBtn")?.addEventListener("touchend", () => {
+downBtn?.addEventListener("touchcancel", () => {
     keys.down = false;
 });
 
@@ -381,10 +429,10 @@ function spawnEnemy() {
 setInterval(spawnEnemy, 1000);
 
 /* ==========================
-   BOSS
+   BOSS（WARNING〜出現を軽量化）
 ========================== */
 async function spawnBoss() {
-    if (bossSpawned || isSpawningBoss) return;
+    if (bossSpawned || isSpawningBoss || !gameRunning) return;
     isSpawningBoss = true;
 
     const warning = document.getElementById("warning");
@@ -392,19 +440,27 @@ async function spawnBoss() {
 
     enemies.length = 0;
     enemyBullets.length = 0;
+    clearBossTimer();
     gameRunning = false;
 
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     warning?.classList.add("hidden");
+
+    if (!isSpawningBoss || player.hp <= 0) {
+        isSpawningBoss = false;
+        return;
+    }
+
     bossSpawned = true;
     isSpawningBoss = false;
 
     bossContainer.classList.remove("hidden");
+    bossFill.style.width = "100%";
 
     boss = {
-        x: canvas.width - 280,
-        y: canvas.height / 2 - 100,
+        x: Math.max(80, canvas.width - 280),
+        y: Math.max(0, canvas.height / 2 - 100),
         width: 240,
         height: 200,
         hp: 150,
@@ -413,21 +469,21 @@ async function spawnBoss() {
         dir: 1
     };
 
-    for (let i = 0; i < 40; i++) {
-        createExplosion(canvas.width - 280, canvas.height / 2, "#ff3300");
+    for (let i = 0; i < 12; i++) {
+        createExplosion(
+            boss.x + Math.random() * boss.width * 0.6,
+            boss.y + Math.random() * boss.height * 0.6,
+            "#ff3300",
+            12
+        );
     }
 
-    startShake(35, 70);
-    playSound(80, 0.4);
-    setTimeout(() => playSound(60, 0.5), 200);
+    startShake(18, 35);
+    playSound(80, 0.25);
 
     gameRunning = true;
     stopBGM();
     startBossBGM();
-
-    if (bossAttackInterval) {
-        clearInterval(bossAttackInterval);
-    }
 
     bossAttackInterval = setInterval(() => {
         if (!boss || !gameRunning) return;
@@ -482,21 +538,20 @@ function saveRanking() {
 function gameOver() {
     stopBGM();
     stopBossBGM();
-    if (bossAttackInterval) {
-        clearInterval(bossAttackInterval);
-        bossAttackInterval = null;
-    }
+    clearBossTimer();
+    isSpawningBoss = false;
     gameRunning = false;
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
         createExplosion(
             player.x + player.width / 2,
             player.y + player.height / 2,
-            "#00ffff"
+            "#00ffff",
+            10
         );
     }
 
-    startShake(25, 50);
+    startShake(20, 40);
 
     saveRanking();
     loadRanking();
@@ -508,10 +563,8 @@ function gameOver() {
 function gameClear() {
     stopBGM();
     stopBossBGM();
-    if (bossAttackInterval) {
-        clearInterval(bossAttackInterval);
-        bossAttackInterval = null;
-    }
+    clearBossTimer();
+    isSpawningBoss = false;
     gameRunning = false;
 
     saveRanking();
@@ -651,14 +704,11 @@ function update() {
                 });
                 score += 10;
 
-                for (let j = 0; j < 3; j++) {
-                    createExplosion(b.x, b.y, "#ffff00");
-                }
-                createExplosion(b.x, b.y, "#ffffff");
+                createExplosion(b.x, b.y, "#ffff00", 14);
+                createExplosion(b.x, b.y, "#ffffff", 8);
 
                 startShake(6, 10);
                 playSound(900, 0.03);
-                setTimeout(() => playSound(1200, 0.03), 30);
                 break;
             }
         }
@@ -691,14 +741,15 @@ function update() {
                 startShake(2, 4);
 
                 if (boss.hp <= 0) {
-                    for (let k = 0; k < 30; k++) {
+                    for (let k = 0; k < 15; k++) {
                         createExplosion(
                             boss.x + Math.random() * boss.width,
                             boss.y + Math.random() * boss.height,
-                            "#ff2200"
+                            "#ff2200",
+                            12
                         );
                     }
-                    startShake(30, 60);
+                    startShake(22, 45);
                     score += 2000;
                     boss = null;
                     bossContainer.classList.add("hidden");
