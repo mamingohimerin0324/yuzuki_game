@@ -21,6 +21,7 @@ const clearRestartBtn = document.getElementById("clearRestartBtn");
 const titleScreen = document.getElementById("titleScreen");
 const startBtn = document.getElementById("startBtn");
 const highScore = document.getElementById("highScore");
+const warningEl = document.getElementById("warning");
 
 const shockwaves = [];
 
@@ -36,7 +37,7 @@ resizeCanvas();
 
 function initStars() {
     stars.length = 0;
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 90; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -54,173 +55,151 @@ window.addEventListener("resize", () => {
 });
 
 /* ==========================
-   AUDIO
+   AUDIO（iPad Safari 安定版：ノード使い回し）
 ========================== */
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const audioCtx = AudioContextClass ? new AudioContextClass() : null;
+
 let bgmOsc1 = null;
 let bgmOsc2 = null;
 let bgmGain = null;
-let bossOsc1 = null;
-let bossOsc2 = null;
-let bossGain = null;
-let bgmInterval = null;
-let bossInterval = null;
+let bgmStep = 0;
+let bgmTimer = 0;
+let bgmMode = "none"; // "none" | "normal" | "boss"
 
-function playSound(freq, duration = 0.08) {
+const NORMAL_MELODY = [110, 139, 165, 220, 165, 139, 185, 247];
+const BOSS_MELODY = [82, 98, 110, 82, 147, 110, 98, 73];
+
+function unlockAudio() {
+    if (!audioCtx) return;
     if (audioCtx.state === "suspended") {
-        audioCtx.resume();
+        audioCtx.resume().catch(() => {});
     }
-    if (audioCtx.state !== "running") return;
-
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.frequency.value = freq;
-    gain.gain.value = 0.08;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(
-        0.00001,
-        audioCtx.currentTime + duration
-    );
-    osc.stop(audioCtx.currentTime + duration);
 }
 
-function startBGM() {
-    if (bgmOsc1) return;
-
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
-
-    bgmOsc1 = audioCtx.createOscillator();
-    bgmOsc2 = audioCtx.createOscillator();
-    bgmGain = audioCtx.createGain();
-
-    bgmOsc1.type = "sawtooth";
-    bgmOsc2.type = "triangle";
-
-    bgmOsc1.frequency.value = 110;
-    bgmOsc2.frequency.value = 220;
-    bgmGain.gain.value = 0.02;
-
-    bgmOsc1.connect(bgmGain);
-    bgmOsc2.connect(bgmGain);
-    bgmGain.connect(audioCtx.destination);
-
-    bgmOsc1.start();
-    bgmOsc2.start();
-
-    let step = 0;
-    const melody = [110, 139, 165, 220, 165, 139, 185, 247];
-
-    bgmInterval = setInterval(() => {
-        if (!gameRunning) {
-            stopBGM();
-            return;
-        }
-
-        const note = melody[step % melody.length];
-        bgmOsc1.frequency.setValueAtTime(note, audioCtx.currentTime);
-        bgmOsc2.frequency.setValueAtTime(note * 2, audioCtx.currentTime);
-        step++;
-    }, 300);
-}
-
-function stopBGM() {
-    if (bgmInterval) {
-        clearInterval(bgmInterval);
-        bgmInterval = null;
-    }
-
-    if (!bgmOsc1) return;
+function playSound(freq, duration = 0.06) {
+    if (!audioCtx || audioCtx.state !== "running") return;
 
     try {
-        bgmOsc1.stop();
-        bgmOsc2.stop();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration);
     } catch (e) {}
-    bgmOsc1 = null;
-    bgmOsc2 = null;
-    bgmGain = null;
 }
 
-function startBossBGM() {
-    if (bossOsc1) return;
-
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
-
-    bossOsc1 = audioCtx.createOscillator();
-    bossOsc2 = audioCtx.createOscillator();
-    bossGain = audioCtx.createGain();
-
-    bossOsc1.type = "sawtooth";
-    bossOsc2.type = "square";
-    bossGain.gain.value = 0.03;
-
-    bossOsc1.connect(bossGain);
-    bossOsc2.connect(bossGain);
-    bossGain.connect(audioCtx.destination);
-
-    bossOsc1.start();
-    bossOsc2.start();
-
-    let step = 0;
-    const melody = [82, 98, 110, 82, 147, 110, 98, 73];
-
-    bossInterval = setInterval(() => {
-        if (!boss || !gameRunning) {
-            stopBossBGM();
-            return;
-        }
-
-        const note = melody[step % melody.length];
-        bossOsc1.frequency.setValueAtTime(note, audioCtx.currentTime);
-        bossOsc2.frequency.setValueAtTime(note * 2, audioCtx.currentTime);
-        step++;
-    }, 220);
-}
-
-function stopBossBGM() {
-    if (bossInterval) {
-        clearInterval(bossInterval);
-        bossInterval = null;
-    }
-
-    if (!bossOsc1) return;
+function ensureBGMNodes() {
+    if (!audioCtx || bgmOsc1) return;
 
     try {
-        bossOsc1.stop();
-        bossOsc2.stop();
+        bgmOsc1 = audioCtx.createOscillator();
+        bgmOsc2 = audioCtx.createOscillator();
+        bgmGain = audioCtx.createGain();
+
+        bgmOsc1.type = "sawtooth";
+        bgmOsc2.type = "triangle";
+
+        bgmOsc1.frequency.value = 110;
+        bgmOsc2.frequency.value = 220;
+        bgmGain.gain.value = 0;
+
+        bgmOsc1.connect(bgmGain);
+        bgmOsc2.connect(bgmGain);
+        bgmGain.connect(audioCtx.destination);
+
+        bgmOsc1.start();
+        bgmOsc2.start();
+    } catch (e) {
+        bgmOsc1 = null;
+        bgmOsc2 = null;
+        bgmGain = null;
+    }
+}
+
+function setBGMMode(mode) {
+    bgmMode = mode;
+    bgmStep = 0;
+    bgmTimer = 0;
+
+    if (!audioCtx) return;
+    ensureBGMNodes();
+    if (!bgmGain || !bgmOsc1 || !bgmOsc2) return;
+
+    try {
+        const now = audioCtx.currentTime;
+        if (mode === "none") {
+            bgmGain.gain.setTargetAtTime(0, now, 0.02);
+        } else if (mode === "normal") {
+            bgmOsc1.type = "sawtooth";
+            bgmOsc2.type = "triangle";
+            bgmGain.gain.setTargetAtTime(0.02, now, 0.02);
+        } else if (mode === "boss") {
+            bgmOsc1.type = "sawtooth";
+            bgmOsc2.type = "square";
+            bgmGain.gain.setTargetAtTime(0.025, now, 0.02);
+        }
     } catch (e) {}
-    bossOsc1 = null;
-    bossOsc2 = null;
-    bossGain = null;
+}
+
+function updateBGM() {
+    if (bgmMode === "none" || !audioCtx || audioCtx.state !== "running") return;
+    if (!bgmOsc1 || !bgmOsc2) return;
+
+    bgmTimer++;
+    const intervalFrames = bgmMode === "boss" ? 13 : 18;
+    if (bgmTimer < intervalFrames) return;
+    bgmTimer = 0;
+
+    const melody = bgmMode === "boss" ? BOSS_MELODY : NORMAL_MELODY;
+    const note = melody[bgmStep % melody.length];
+    bgmStep++;
+
+    try {
+        const now = audioCtx.currentTime;
+        bgmOsc1.frequency.setValueAtTime(note, now);
+        bgmOsc2.frequency.setValueAtTime(note * 2, now);
+    } catch (e) {}
 }
 
 /* ==========================
-   ASSETS
+   ASSETS（SVGを事前にCanvasへ焼き付けて軽量化）
 ========================== */
 const images = {};
 
-function loadImage(src) {
+function loadImageAndCache(src, w, h) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => resolve(img);
+        img.onload = () => {
+            try {
+                const off = document.createElement("canvas");
+                off.width = w;
+                off.height = h;
+                const offCtx = off.getContext("2d");
+                offCtx.drawImage(img, 0, 0, w, h);
+                resolve(off);
+            } catch (e) {
+                resolve(img);
+            }
+        };
         img.onerror = reject;
         img.src = src;
     });
 }
 
 async function loadAssets() {
-    images.player = await loadImage("assets/svg/player.svg");
-    images.enemy = await loadImage("assets/svg/enemy.svg");
-    images.boss = await loadImage("assets/svg/boss.svg");
-    images.bullet = await loadImage("assets/svg/bullet.svg");
+    images.player = await loadImageAndCache("assets/svg/player.svg", 60, 60);
+    images.enemy = await loadImageAndCache("assets/svg/enemy.svg", 50, 50);
+    images.boss = await loadImageAndCache("assets/svg/boss.svg", 240, 200);
+    images.bullet = await loadImageAndCache("assets/svg/bullet.svg", 20, 12);
 }
 
 function loadHighScore() {
@@ -250,11 +229,11 @@ resetPlayer();
 
 let score = 0;
 let gameRunning = false;
-let isSpawningBoss = false;
 
 let boss = null;
 let bossSpawned = false;
-let bossAttackInterval = null;
+let warningFrames = 0; // >0 の間はWARNING演出中
+let bossShotFrames = 0;
 
 let shakePower = 0;
 let shakeTime = 0;
@@ -267,19 +246,11 @@ const stars = [];
 
 initStars();
 
-function clearBossTimer() {
-    if (bossAttackInterval) {
-        clearInterval(bossAttackInterval);
-        bossAttackInterval = null;
-    }
-}
-
 startBtn.addEventListener("click", () => {
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
+    unlockAudio();
 
     titleScreen.classList.add("hidden");
+    warningEl?.classList.add("hidden");
 
     player.hp = player.maxHp;
     score = 0;
@@ -288,9 +259,8 @@ startBtn.addEventListener("click", () => {
 
     boss = null;
     bossSpawned = false;
-    isSpawningBoss = false;
-
-    clearBossTimer();
+    warningFrames = 0;
+    bossShotFrames = 0;
 
     bullets.length = 0;
     enemies.length = 0;
@@ -305,24 +275,21 @@ startBtn.addEventListener("click", () => {
     clearScreen.classList.add("hidden");
 
     resetPlayer();
-    stopBGM();
-    stopBossBGM();
     gameRunning = true;
-
-    startBGM();
+    setBGMMode("normal");
 });
 
 /* ==========================
-   SHAKE & EXPLOSION（iPad負荷軽減版）
+   SHAKE & EXPLOSION
 ========================== */
-const MAX_EXPLOSIONS = 160;
+const MAX_EXPLOSIONS = 120;
 
 function startShake(power, duration) {
     shakePower = Math.max(shakePower, power);
     shakeTime = Math.max(shakeTime, duration);
 }
 
-function createExplosion(x, y, color = "#ff9900", count = 16) {
+function createExplosion(x, y, color = "#ff9900", count = 12) {
     for (let i = 0; i < count; i++) {
         if (explosions.length >= MAX_EXPLOSIONS) {
             explosions.shift();
@@ -332,8 +299,8 @@ function createExplosion(x, y, color = "#ff9900", count = 16) {
             y,
             dx: (Math.random() - 0.5) * 8,
             dy: (Math.random() - 0.5) * 8,
-            size: Math.random() * 8 + 4,
-            life: 26,
+            size: Math.random() * 7 + 3,
+            life: 24,
             color
         });
     }
@@ -367,41 +334,39 @@ document.addEventListener("visibilitychange", () => {
 
 document.getElementById("fireBtn")?.addEventListener("touchstart", e => {
     e.preventDefault();
+    unlockAudio();
     shoot();
 }, { passive: false });
 
-canvas.addEventListener("click", shoot);
+canvas.addEventListener("click", () => {
+    unlockAudio();
+    shoot();
+});
 
 const upBtn = document.getElementById("upBtn");
 const downBtn = document.getElementById("downBtn");
 
 upBtn?.addEventListener("touchstart", e => {
     e.preventDefault();
+    unlockAudio();
     keys.up = true;
 }, { passive: false });
-upBtn?.addEventListener("touchend", () => {
-    keys.up = false;
-});
-upBtn?.addEventListener("touchcancel", () => {
-    keys.up = false;
-});
+upBtn?.addEventListener("touchend", () => { keys.up = false; });
+upBtn?.addEventListener("touchcancel", () => { keys.up = false; });
 
 downBtn?.addEventListener("touchstart", e => {
     e.preventDefault();
+    unlockAudio();
     keys.down = true;
 }, { passive: false });
-downBtn?.addEventListener("touchend", () => {
-    keys.down = false;
-});
-downBtn?.addEventListener("touchcancel", () => {
-    keys.down = false;
-});
+downBtn?.addEventListener("touchend", () => { keys.down = false; });
+downBtn?.addEventListener("touchcancel", () => { keys.down = false; });
 
 /* ==========================
    SHOOT & ENEMY
 ========================== */
 function shoot() {
-    if (!gameRunning) return;
+    if (!gameRunning || warningFrames > 0) return;
 
     bullets.push({
         x: player.x + player.width,
@@ -414,46 +379,41 @@ function shoot() {
     playSound(800, 0.05);
 }
 
-function spawnEnemy() {
-    if (!gameRunning || bossSpawned || isSpawningBoss) return;
+let enemySpawnFrames = 0;
 
-    enemies.push({
-        x: canvas.width + 60,
-        y: Math.random() * Math.max(10, canvas.height - 50),
-        width: 50,
-        height: 50,
-        speed: 2
-    });
+function updateEnemySpawner() {
+    if (!gameRunning || bossSpawned || warningFrames > 0) return;
+
+    enemySpawnFrames++;
+    if (enemySpawnFrames >= 60) {
+        enemySpawnFrames = 0;
+        enemies.push({
+            x: canvas.width + 60,
+            y: Math.random() * Math.max(10, canvas.height - 50),
+            width: 50,
+            height: 50,
+            speed: 2
+        });
+    }
 }
 
-setInterval(spawnEnemy, 1000);
-
 /* ==========================
-   BOSS（WARNING〜出現を軽量化）
+   BOSS（非同期なしのフレーム管理版）
 ========================== */
-async function spawnBoss() {
-    if (bossSpawned || isSpawningBoss || !gameRunning) return;
-    isSpawningBoss = true;
+function triggerBossWarning() {
+    if (bossSpawned || warningFrames > 0) return;
 
-    const warning = document.getElementById("warning");
-    warning?.classList.remove("hidden");
-
+    warningFrames = 120; // 約2秒（60fps換算）
     enemies.length = 0;
     enemyBullets.length = 0;
-    clearBossTimer();
-    gameRunning = false;
+    warningEl?.classList.remove("hidden");
+    setBGMMode("none");
+}
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    warning?.classList.add("hidden");
-
-    if (!isSpawningBoss || player.hp <= 0) {
-        isSpawningBoss = false;
-        return;
-    }
-
+function finalizeBossSpawn() {
+    warningEl?.classList.add("hidden");
     bossSpawned = true;
-    isSpawningBoss = false;
+    bossShotFrames = 0;
 
     bossContainer.classList.remove("hidden");
     bossFill.style.width = "100%";
@@ -469,36 +429,18 @@ async function spawnBoss() {
         dir: 1
     };
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 8; i++) {
         createExplosion(
             boss.x + Math.random() * boss.width * 0.6,
             boss.y + Math.random() * boss.height * 0.6,
             "#ff3300",
-            12
+            10
         );
     }
 
-    startShake(18, 35);
-    playSound(80, 0.25);
-
-    gameRunning = true;
-    stopBGM();
-    startBossBGM();
-
-    bossAttackInterval = setInterval(() => {
-        if (!boss || !gameRunning) return;
-
-        for (let i = -2; i <= 2; i++) {
-            enemyBullets.push({
-                x: boss.x,
-                y: boss.y + boss.height / 2,
-                width: 14,
-                height: 14,
-                dx: -6,
-                dy: i * 1.5
-            });
-        }
-    }, 1000);
+    startShake(15, 25);
+    playSound(80, 0.2);
+    setBGMMode("boss");
 }
 
 /* ==========================
@@ -536,13 +478,12 @@ function saveRanking() {
    GAME EVENTS
 ========================== */
 function gameOver() {
-    stopBGM();
-    stopBossBGM();
-    clearBossTimer();
-    isSpawningBoss = false;
+    setBGMMode("none");
+    warningFrames = 0;
+    warningEl?.classList.add("hidden");
     gameRunning = false;
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
         createExplosion(
             player.x + player.width / 2,
             player.y + player.height / 2,
@@ -551,7 +492,7 @@ function gameOver() {
         );
     }
 
-    startShake(20, 40);
+    startShake(18, 35);
 
     saveRanking();
     loadRanking();
@@ -561,10 +502,9 @@ function gameOver() {
 }
 
 function gameClear() {
-    stopBGM();
-    stopBossBGM();
-    clearBossTimer();
-    isSpawningBoss = false;
+    setBGMMode("none");
+    warningFrames = 0;
+    warningEl?.classList.add("hidden");
     gameRunning = false;
 
     saveRanking();
@@ -616,6 +556,19 @@ function update() {
 
     if (!gameRunning) return;
 
+    updateBGM();
+
+    // WARNINGカウントダウン処理
+    if (warningFrames > 0) {
+        warningFrames--;
+        if (warningFrames === 0) {
+            finalizeBossSpawn();
+        }
+        return;
+    }
+
+    updateEnemySpawner();
+
     if (keys.up) player.y -= player.speed;
     if (keys.down) player.y += player.speed;
 
@@ -653,13 +606,13 @@ function update() {
                 playSound(300, 0.06);
 
                 if (score >= 2000 && !bossSpawned) {
-                    spawnBoss();
+                    triggerBossWarning();
                 }
                 break;
             }
         }
 
-        if (enemyDestroyed) continue;
+        if (enemyDestroyed || warningFrames > 0) continue;
 
         if (hit(e, player)) {
             enemies.splice(ei, 1);
@@ -704,10 +657,10 @@ function update() {
                 });
                 score += 10;
 
-                createExplosion(b.x, b.y, "#ffff00", 14);
-                createExplosion(b.x, b.y, "#ffffff", 8);
+                createExplosion(b.x, b.y, "#ffff00", 10);
+                createExplosion(b.x, b.y, "#ffffff", 6);
 
-                startShake(6, 10);
+                startShake(5, 8);
                 playSound(900, 0.03);
                 break;
             }
@@ -734,6 +687,21 @@ function update() {
             boss.dir *= -1;
         }
 
+        bossShotFrames++;
+        if (bossShotFrames >= 60) {
+            bossShotFrames = 0;
+            for (let i = -2; i <= 2; i++) {
+                enemyBullets.push({
+                    x: boss.x,
+                    y: boss.y + boss.height / 2,
+                    width: 14,
+                    height: 14,
+                    dx: -6,
+                    dy: i * 1.5
+                });
+            }
+        }
+
         for (let bi = bullets.length - 1; bi >= 0; bi--) {
             if (hit(bullets[bi], boss)) {
                 bullets.splice(bi, 1);
@@ -741,19 +709,18 @@ function update() {
                 startShake(2, 4);
 
                 if (boss.hp <= 0) {
-                    for (let k = 0; k < 15; k++) {
+                    for (let k = 0; k < 12; k++) {
                         createExplosion(
                             boss.x + Math.random() * boss.width,
                             boss.y + Math.random() * boss.height,
                             "#ff2200",
-                            12
+                            10
                         );
                     }
-                    startShake(22, 45);
+                    startShake(20, 40);
                     score += 2000;
                     boss = null;
                     bossContainer.classList.add("hidden");
-                    stopBossBGM();
                     gameClear();
                     break;
                 }
@@ -826,7 +793,7 @@ function draw() {
 
     explosions.forEach(p => {
         ctx.save();
-        ctx.globalAlpha = Math.max(0, p.life / 30);
+        ctx.globalAlpha = Math.max(0, p.life / 24);
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
