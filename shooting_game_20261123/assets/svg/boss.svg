@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+
+  <defs>
+    <linearGradient id="bossBody" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff4444"/>
+      <stop offset="100%" stop-color="#660000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 本体 -->
+  <polygon
+    points="246,128 170,30 40,40 10,128 40,216 170,226"
+    fill="url(#bossBody)"
+    stroke="#ffffff"
+    stroke-width="4"/>
+
+  <!-- コア -->
+  <circle
+    cx="90"
+    cy="128"
+    r="36"
+    fill="#ffff00"
+    stroke="#ffffff"
+    stroke-width="4"/>
+
+  <circle
+    cx="90"
+    cy="128"
+    r="18"
+    fill="#ff8800"/>
+
+  <!-- 上砲台 -->
+  <rect
+    x="170"
+    y="50"
+    width="60"
+    height="18"
+    rx="8"
+    fill="#cccccc"/>
+
+  <!-- 下砲台 -->
+  <rect
+    x="170"
+    y="188"
+    width="60"
+    height="18"
+    rx="8"
+    fill="#cccccc"/>
+
+  <!-- 中央砲身 -->
+  <rect
+    x="5"
+    y="118"
+    width="55"
+    height="20"
+    rx="8"
+    fill="#bbbbbb"/>
+
+</svg>

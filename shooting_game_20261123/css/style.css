@@ -1,0 +1,588 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body{
+
+    width:100%;
+    height:100%;
+
+    overflow:hidden;
+
+    background:#000;
+
+    font-family:
+        "Segoe UI",
+        sans-serif;
+
+    color:#fff;
+
+}
+
+/* ==========================
+   CANVAS
+========================== */
+
+#gameCanvas{
+
+    display:block;
+
+    width:100vw;
+    height:100vh;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #081020 0%,
+            #000000 100%
+        );
+
+}
+
+/* ==========================
+   HUD
+========================== */
+
+#hud{
+
+    position:fixed;
+
+    top:15px;
+    left:15px;
+
+    z-index:100;
+
+}
+
+#score{
+
+    font-size:28px;
+    font-weight:bold;
+
+    margin-bottom:12px;
+
+    text-shadow:
+        0 0 8px #00ffff;
+
+}
+
+/* ==========================
+   HP BAR
+========================== */
+
+#hpContainer{
+
+    width:260px;
+    height:22px;
+
+    background:
+        rgba(255,255,255,.15);
+
+    border-radius:999px;
+
+    overflow:hidden;
+
+    border:
+        2px solid rgba(255,255,255,.25);
+
+}
+
+#hpFill{
+
+    width:100%;
+    height:100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            #00ff88,
+            #00ccff
+        );
+
+    transition:.2s;
+
+}
+
+/* ==========================
+   BOSS BAR
+========================== */
+
+#bossContainer{
+
+    position:fixed;
+
+    top:15px;
+    left:50%;
+
+    transform:
+        translateX(-50%);
+
+    width:min(700px,80vw);
+    height:26px;
+
+    background:
+        rgba(255,255,255,.15);
+
+    border-radius:999px;
+
+    overflow:hidden;
+
+    z-index:200;
+
+    border:
+        2px solid rgba(255,255,255,.25);
+
+}
+
+#bossFill{
+
+    width:100%;
+    height:100%;
+
+    transition:.2s;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff4444,
+            #ff9900
+        );
+
+}
+
+/* ==========================
+   TITLE
+========================== */
+
+#titleScreen{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+    align-items:center;
+
+    gap:20px;
+
+    z-index:5000;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(20,30,60,.95),
+            rgba(0,0,0,.98)
+        );
+
+}
+
+#titleScreen h1{
+
+    font-size:64px;
+
+    color:#fff;
+
+    text-shadow:
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+
+}
+
+#startBtn{
+
+    padding:
+        18px 50px;
+
+    font-size:28px;
+
+    border:none;
+
+    border-radius:999px;
+
+    cursor:pointer;
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00ccff,
+            #0066ff
+        );
+
+    box-shadow:
+        0 0 25px #00ccff;
+
+}
+
+#startBtn:hover{
+
+    transform:scale(1.05);
+
+}
+
+/* ==========================
+   HIGH SCORE
+========================== */
+
+#highScore{
+
+    font-size:32px;
+
+    color:#ffff55;
+
+    text-shadow:
+        0 0 10px #ffff55;
+
+}
+
+/* ==========================
+   WARNING
+========================== */
+
+#warning{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    font-size:72px;
+    font-weight:bold;
+
+    z-index:6000;
+
+    background:
+        rgba(0,0,0,.75);
+
+    color:#ff3333;
+
+    text-shadow:
+        0 0 20px #ff0000,
+        0 0 50px #ff0000;
+
+    animation:
+        warningBlink .4s infinite;
+
+}
+
+@keyframes warningBlink{
+
+    0%{
+        opacity:1;
+    }
+
+    50%{
+        opacity:.25;
+    }
+
+    100%{
+        opacity:1;
+    }
+
+}
+
+/* ==========================
+   RESULT
+========================== */
+
+#gameOver,
+#clearScreen{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+    align-items:center;
+
+    gap:20px;
+
+    z-index:4000;
+
+    background:
+        rgba(0,0,0,.88);
+
+}
+
+#gameOver h2,
+#clearScreen h2{
+
+    font-size:64px;
+
+}
+
+#finalScore,
+#clearScore{
+
+    font-size:36px;
+
+}
+
+#restartBtn,
+#clearRestartBtn{
+
+    padding:
+        16px 40px;
+
+    border:none;
+
+    border-radius:999px;
+
+    font-size:22px;
+
+    cursor:pointer;
+
+}
+
+/* ==========================
+   RANKING
+========================== */
+
+#ranking{
+
+    position:fixed;
+
+    top:15px;
+    right:15px;
+
+    width:220px;
+
+    z-index:100;
+
+    background:
+        rgba(0,0,0,.45);
+
+    padding:12px;
+
+    border-radius:16px;
+
+    backdrop-filter:
+        blur(10px);
+
+}
+
+#ranking h3{
+
+    margin-bottom:8px;
+
+}
+
+#rankingList{
+
+    list-style:none;
+
+}
+
+#rankingList li{
+
+    padding:4px 0;
+
+}
+
+/* ==========================
+   MOBILE PAD
+========================== */
+
+#mobilePad{
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    z-index:3000;
+
+}
+
+#mobilePad button{
+
+    pointer-events:auto;
+
+    border:none;
+
+    color:#fff;
+
+    font-weight:bold;
+
+    border-radius:50%;
+
+    user-select:none;
+    -webkit-user-select:none;
+
+    touch-action:none;
+
+    backdrop-filter:blur(8px);
+
+}
+
+#mobilePad button:active{
+
+    transform:scale(.92);
+
+}
+
+/* UP */
+
+#upBtn{
+
+    position:fixed;
+
+    left:30px;
+    bottom:170px;
+
+    width:110px;
+    height:110px;
+
+    font-size:42px;
+
+    background:
+        rgba(0,180,255,.35);
+
+    border:
+        2px solid rgba(255,255,255,.4);
+
+    box-shadow:
+        0 0 20px rgba(0,180,255,.45);
+
+}
+
+/* DOWN */
+
+#downBtn{
+
+    position:fixed;
+
+    left:30px;
+    bottom:35px;
+
+    width:110px;
+    height:110px;
+
+    font-size:42px;
+
+    background:
+        rgba(0,180,255,.35);
+
+    border:
+        2px solid rgba(255,255,255,.4);
+
+    box-shadow:
+        0 0 20px rgba(0,180,255,.45);
+
+}
+
+/* FIRE */
+
+#fireBtn{
+
+    position:fixed;
+
+    right:40px;
+    bottom:45px;
+
+    width:150px;
+    height:150px;
+
+    font-size:34px;
+
+    background:
+        radial-gradient(
+            circle,
+            #ff6666,
+            #cc0000
+        );
+
+    border:
+        3px solid rgba(255,255,255,.45);
+
+    box-shadow:
+        0 0 35px rgba(255,0,0,.55);
+
+}
+
+/* ==========================
+   iPad Landscape
+========================== */
+
+@media screen
+and (min-width:1024px)
+and (orientation:landscape){
+
+    #upBtn{
+
+        width:130px;
+        height:130px;
+
+        left:45px;
+        bottom:190px;
+
+        font-size:48px;
+
+    }
+
+    #downBtn{
+
+        width:130px;
+        height:130px;
+
+        left:45px;
+        bottom:40px;
+
+        font-size:48px;
+
+    }
+
+    #fireBtn{
+
+        width:180px;
+        height:180px;
+
+        right:50px;
+        bottom:60px;
+
+        font-size:38px;
+
+    }
+
+}
+
+/* ==========================
+   PC ONLY
+========================== */
+
+@media (hover:hover) and (pointer:fine){
+
+    #mobilePad{
+
+        display:none;
+
+    }
+
+}
+
+/* ==========================
+   UTIL
+========================== */
+
+.hidden{
+
+    display:none !important;
+
+}

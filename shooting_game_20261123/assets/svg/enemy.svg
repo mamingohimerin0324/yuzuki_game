@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+
+  <defs>
+    <linearGradient id="enemyBody" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff6666"/>
+      <stop offset="100%" stop-color="#aa0000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 機体 -->
+  <polygon
+    points="118,64 58,20 10,64 58,108"
+    fill="url(#enemyBody)"
+    stroke="#ffffff"
+    stroke-width="3"/>
+
+  <!-- コア -->
+  <circle
+    cx="42"
+    cy="64"
+    r="12"
+    fill="#ffff00"/>
+
+  <!-- エンジン -->
+  <rect
+    x="108"
+    y="48"
+    width="16"
+    height="10"
+    fill="#ff6600"/>
+
+  <rect
+    x="108"
+    y="70"
+    width="16"
+    height="10"
+    fill="#ff6600"/>
+
+</svg>

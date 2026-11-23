@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ゆづきゲーム</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- タイトル画面 -->
+
+    <div id="titleScreen">
+
+        <h1>🎮 ゆづきゲーム 🎮</h1>
+
+        <div>
+            ハイスコア :
+            <span id="highScore">0</span>
+        </div>
+
+        <button id="startBtn">
+            GAME START
+        </button>
+
+    </div>
+
+    <!-- WARNING -->
+
+    <div id="warning" class="hidden">
+
+        ⚠ WARNING ⚠
+
+    </div>
+
+    <!-- HUD -->
+
+    <div id="hud">
+
+        <div id="score">
+            0
+        </div>
+
+        <div id="hpContainer">
+
+            <div id="hpFill"></div>
+
+        </div>
+
+    </div>
+
+    <!-- ボスHP -->
+
+    <div id="bossContainer" class="hidden">
+
+        <div id="bossFill"></div>
+
+    </div>
+
+    <!-- ランキング -->
+
+    <div id="ranking">
+
+        <h3>RANKING</h3>
+
+        <ol id="rankingList"></ol>
+
+    </div>
+
+    <!-- ゲームキャンバス -->
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 操作パッド -->
+
+    <div id="mobilePad">
+
+        <button id="upBtn">
+            ▲
+        </button>
+
+        <button id="downBtn">
+            ▼
+        </button>
+
+        <button id="fireBtn">
+            FIRE
+        </button>
+
+    </div>
+
+    <!-- GAME OVER -->
+
+    <div id="gameOver" class="hidden">
+
+        <h2>
+            💥 GAME OVER 💥
+        </h2>
+
+        <div id="finalScore">
+            SCORE : 0
+        </div>
+
+        <button id="restartBtn">
+            もう一度遊ぶ
+        </button>
+
+    </div>
+
+    <!-- GAME CLEAR -->
+
+    <div id="clearScreen" class="hidden">
+
+        <h2>
+            🎉 GAME CLEAR 🎉
+        </h2>
+
+        <div id="clearScore">
+            SCORE : 0
+        </div>
+
+        <button id="clearRestartBtn">
+            もう一度遊ぶ
+        </button>
+
+    </div>
+
+    <script src="js/game.js"></script>
+
+</body>
+
+</html>

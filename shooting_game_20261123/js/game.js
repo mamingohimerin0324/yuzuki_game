@@ -1,0 +1,829 @@
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const hpFill = document.getElementById("hpFill");
+
+const bossContainer = document.getElementById("bossContainer");
+const bossFill = document.getElementById("bossFill");
+
+const rankingList = document.getElementById("rankingList");
+
+const gameOverScreen = document.getElementById("gameOver");
+const clearScreen = document.getElementById("clearScreen");
+
+const finalScore = document.getElementById("finalScore");
+const clearScore = document.getElementById("clearScore");
+
+const restartBtn = document.getElementById("restartBtn");
+const clearRestartBtn = document.getElementById("clearRestartBtn");
+
+const titleScreen = document.getElementById("titleScreen");
+const startBtn = document.getElementById("startBtn");
+const highScore = document.getElementById("highScore");
+
+const shockwaves = [];
+
+/* ==========================
+   CANVAS
+========================== */
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+resizeCanvas();
+
+function initStars() {
+    stars.length = 0;
+    for (let i = 0; i < 120; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 3 + 1
+        });
+    }
+}
+
+window.addEventListener("resize", () => {
+    resizeCanvas();
+    player.x = 80;
+    player.y = Math.min(player.y, canvas.height - player.height);
+    initStars();
+});
+
+/* ==========================
+   AUDIO
+========================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let bgmOsc1 = null;
+let bgmOsc2 = null;
+let bgmGain = null;
+let bossOsc1 = null;
+let bossOsc2 = null;
+let bossGain = null;
+let bgmInterval = null;
+let bossInterval = null;
+
+function playSound(freq, duration = 0.08) {
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.frequency.value = freq;
+    gain.gain.value = 0.08;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(
+        0.00001,
+        audioCtx.currentTime + duration
+    );
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function startBGM() {
+    if (bgmOsc1) return;
+
+    bgmOsc1 = audioCtx.createOscillator();
+    bgmOsc2 = audioCtx.createOscillator();
+    bgmGain = audioCtx.createGain();
+
+    bgmOsc1.type = "sawtooth";
+    bgmOsc2.type = "triangle";
+
+    bgmOsc1.frequency.value = 110;
+    bgmOsc2.frequency.value = 220;
+    bgmGain.gain.value = 0.02;
+
+    bgmOsc1.connect(bgmGain);
+    bgmOsc2.connect(bgmGain);
+    bgmGain.connect(audioCtx.destination);
+
+    bgmOsc1.start();
+    bgmOsc2.start();
+
+    let step = 0;
+    const melody = [110, 139, 165, 220, 165, 139, 185, 247];
+
+    bgmInterval = setInterval(() => {
+        if (!gameRunning) {
+            stopBGM();
+            return;
+        }
+
+        const note = melody[step % melody.length];
+        bgmOsc1.frequency.setValueAtTime(note, audioCtx.currentTime);
+        bgmOsc2.frequency.setValueAtTime(note * 2, audioCtx.currentTime);
+        step++;
+    }, 300);
+}
+
+function stopBGM() {
+    if (bgmInterval) {
+        clearInterval(bgmInterval);
+        bgmInterval = null;
+    }
+
+    if (!bgmOsc1) return;
+
+    bgmOsc1.stop();
+    bgmOsc2.stop();
+    bgmOsc1 = null;
+    bgmOsc2 = null;
+    bgmGain = null;
+}
+
+function startBossBGM() {
+    if (bossOsc1) return;
+
+    bossOsc1 = audioCtx.createOscillator();
+    bossOsc2 = audioCtx.createOscillator();
+    bossGain = audioCtx.createGain();
+
+    bossOsc1.type = "sawtooth";
+    bossOsc2.type = "square";
+    bossGain.gain.value = 0.03;
+
+    bossOsc1.connect(bossGain);
+    bossOsc2.connect(bossGain);
+    bossGain.connect(audioCtx.destination);
+
+    bossOsc1.start();
+    bossOsc2.start();
+
+    let step = 0;
+    const melody = [82, 98, 110, 82, 147, 110, 98, 73];
+
+    bossInterval = setInterval(() => {
+        if (!boss || !gameRunning) {
+            stopBossBGM();
+            return;
+        }
+
+        const note = melody[step % melody.length];
+        bossOsc1.frequency.setValueAtTime(note, audioCtx.currentTime);
+        bossOsc2.frequency.setValueAtTime(note * 2, audioCtx.currentTime);
+        step++;
+    }, 220);
+}
+
+function stopBossBGM() {
+    if (bossInterval) {
+        clearInterval(bossInterval);
+        bossInterval = null;
+    }
+
+    if (!bossOsc1) return;
+
+    bossOsc1.stop();
+    bossOsc2.stop();
+    bossOsc1 = null;
+    bossOsc2 = null;
+    bossGain = null;
+}
+
+/* ==========================
+   ASSETS
+========================== */
+const images = {};
+
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+async function loadAssets() {
+    images.player = await loadImage("assets/svg/player.svg");
+    images.enemy = await loadImage("assets/svg/enemy.svg");
+    images.boss = await loadImage("assets/svg/boss.svg");
+    images.bullet = await loadImage("assets/svg/bullet.svg");
+}
+
+function loadHighScore() {
+    const ranking = JSON.parse(localStorage.getItem("shootingRanking")) || [];
+    highScore.textContent = ranking[0] || 0;
+}
+
+/* ==========================
+   PLAYER & VARIABLES
+========================== */
+const player = {
+    x: 0,
+    y: 0,
+    width: 60,
+    height: 60,
+    speed: 8,
+    hp: 100,
+    maxHp: 100
+};
+
+function resetPlayer() {
+    player.x = 80;
+    player.y = canvas.height / 2 - 30;
+}
+
+resetPlayer();
+
+let score = 0;
+let gameRunning = false;
+let isSpawningBoss = false;
+
+let boss = null;
+let bossSpawned = false;
+let bossAttackInterval = null;
+
+let shakePower = 0;
+let shakeTime = 0;
+
+const bullets = [];
+const enemies = [];
+const enemyBullets = [];
+const explosions = [];
+const stars = [];
+
+initStars();
+
+startBtn.addEventListener("click", () => {
+    titleScreen.classList.add("hidden");
+
+    player.hp = player.maxHp;
+    score = 0;
+    scoreEl.textContent = score;
+    hpFill.style.width = "100%";
+
+    boss = null;
+    bossSpawned = false;
+    isSpawningBoss = false;
+
+    if (bossAttackInterval) {
+        clearInterval(bossAttackInterval);
+        bossAttackInterval = null;
+    }
+
+    bullets.length = 0;
+    enemies.length = 0;
+    enemyBullets.length = 0;
+    explosions.length = 0;
+    shockwaves.length = 0;
+
+    bossContainer.classList.add("hidden");
+    bossFill.style.width = "100%";
+
+    gameOverScreen.classList.add("hidden");
+    clearScreen.classList.add("hidden");
+
+    resetPlayer();
+    stopBGM();
+    stopBossBGM();
+    gameRunning = true;
+
+    startBGM();
+});
+
+/* ==========================
+   SHAKE & EXPLOSION
+========================== */
+function startShake(power, duration) {
+    shakePower = power;
+    shakeTime = duration;
+}
+
+function createExplosion(x, y, color = "#ff9900") {
+    for (let i = 0; i < 20; i++) {
+        explosions.push({
+            x,
+            y,
+            dx: (Math.random() - 0.5) * 8,
+            dy: (Math.random() - 0.5) * 8,
+            size: Math.random() * 8 + 4,
+            life: 30,
+            color
+        });
+    }
+}
+
+/* ==========================
+   INPUT
+========================== */
+const keys = {
+    up: false,
+    down: false
+};
+
+window.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") keys.up = true;
+    if (e.key === "ArrowDown") keys.down = true;
+    if (e.code === "Space") shoot();
+});
+
+window.addEventListener("keyup", e => {
+    if (e.key === "ArrowUp") keys.up = false;
+    if (e.key === "ArrowDown") keys.down = false;
+});
+
+document.getElementById("fireBtn")?.addEventListener("touchstart", shoot);
+canvas.addEventListener("click", shoot);
+
+document.getElementById("upBtn")?.addEventListener("touchstart", () => {
+    keys.up = true;
+});
+document.getElementById("upBtn")?.addEventListener("touchend", () => {
+    keys.up = false;
+});
+
+document.getElementById("downBtn")?.addEventListener("touchstart", () => {
+    keys.down = true;
+});
+document.getElementById("downBtn")?.addEventListener("touchend", () => {
+    keys.down = false;
+});
+
+/* ==========================
+   SHOOT & ENEMY
+========================== */
+function shoot() {
+    if (!gameRunning) return;
+
+    bullets.push({
+        x: player.x + player.width,
+        y: player.y + player.height / 2 - 6,
+        width: 20,
+        height: 12,
+        speed: 12
+    });
+
+    playSound(800, 0.05);
+}
+
+function spawnEnemy() {
+    if (!gameRunning || bossSpawned || isSpawningBoss) return;
+
+    enemies.push({
+        x: canvas.width + 60,
+        y: Math.random() * Math.max(10, canvas.height - 50),
+        width: 50,
+        height: 50,
+        speed: 2
+    });
+}
+
+setInterval(spawnEnemy, 1000);
+
+/* ==========================
+   BOSS
+========================== */
+async function spawnBoss() {
+    if (bossSpawned || isSpawningBoss) return;
+    isSpawningBoss = true;
+
+    const warning = document.getElementById("warning");
+    warning?.classList.remove("hidden");
+
+    enemies.length = 0;
+    enemyBullets.length = 0;
+    gameRunning = false;
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    warning?.classList.add("hidden");
+    bossSpawned = true;
+    isSpawningBoss = false;
+
+    bossContainer.classList.remove("hidden");
+
+    boss = {
+        x: canvas.width - 280,
+        y: canvas.height / 2 - 100,
+        width: 240,
+        height: 200,
+        hp: 150,
+        maxHp: 150,
+        speed: 3,
+        dir: 1
+    };
+
+    for (let i = 0; i < 40; i++) {
+        createExplosion(canvas.width - 280, canvas.height / 2, "#ff3300");
+    }
+
+    startShake(35, 70);
+    playSound(80, 0.4);
+    setTimeout(() => playSound(60, 0.5), 200);
+
+    gameRunning = true;
+    stopBGM();
+    startBossBGM();
+
+    if (bossAttackInterval) {
+        clearInterval(bossAttackInterval);
+    }
+
+    bossAttackInterval = setInterval(() => {
+        if (!boss || !gameRunning) return;
+
+        for (let i = -2; i <= 2; i++) {
+            enemyBullets.push({
+                x: boss.x,
+                y: boss.y + boss.height / 2,
+                width: 14,
+                height: 14,
+                dx: -6,
+                dy: i * 1.5
+            });
+        }
+    }, 1000);
+}
+
+/* ==========================
+   COLLISION & RANKING
+========================== */
+function hit(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+}
+
+function loadRanking() {
+    const ranking = JSON.parse(localStorage.getItem("shootingRanking")) || [];
+    rankingList.innerHTML = "";
+
+    ranking.forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s;
+        rankingList.appendChild(li);
+    });
+}
+
+function saveRanking() {
+    let ranking = JSON.parse(localStorage.getItem("shootingRanking")) || [];
+    ranking.push(score);
+    ranking.sort((a, b) => b - a);
+    ranking = ranking.slice(0, 5);
+    localStorage.setItem("shootingRanking", JSON.stringify(ranking));
+}
+
+/* ==========================
+   GAME EVENTS
+========================== */
+function gameOver() {
+    stopBGM();
+    stopBossBGM();
+    if (bossAttackInterval) {
+        clearInterval(bossAttackInterval);
+        bossAttackInterval = null;
+    }
+    gameRunning = false;
+
+    for (let i = 0; i < 30; i++) {
+        createExplosion(
+            player.x + player.width / 2,
+            player.y + player.height / 2,
+            "#00ffff"
+        );
+    }
+
+    startShake(25, 50);
+
+    saveRanking();
+    loadRanking();
+    loadHighScore();
+    finalScore.textContent = "SCORE : " + score;
+    gameOverScreen.classList.remove("hidden");
+}
+
+function gameClear() {
+    stopBGM();
+    stopBossBGM();
+    if (bossAttackInterval) {
+        clearInterval(bossAttackInterval);
+        bossAttackInterval = null;
+    }
+    gameRunning = false;
+
+    saveRanking();
+    loadRanking();
+    loadHighScore();
+    clearScore.textContent = "SCORE : " + score;
+    clearScreen.classList.remove("hidden");
+}
+
+/* ==========================
+   UPDATE
+========================== */
+function update() {
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const s = shockwaves[i];
+        s.radius += 6;
+        s.alpha -= 0.04;
+        if (s.alpha <= 0) {
+            shockwaves.splice(i, 1);
+        }
+    }
+
+    stars.forEach(star => {
+        star.x -= star.speed;
+        if (star.x < -10) {
+            star.x = canvas.width + 10;
+            star.y = Math.random() * canvas.height;
+        }
+    });
+
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        const p = explosions[i];
+        p.x += p.dx;
+        p.y += p.dy;
+        p.life--;
+        p.size *= 0.95;
+        if (p.life <= 0) {
+            explosions.splice(i, 1);
+        }
+    }
+
+    if (shakeTime > 0) {
+        shakeTime--;
+        shakePower *= 0.92;
+        if (shakePower < 0.1) {
+            shakePower = 0;
+        }
+    }
+
+    if (!gameRunning) return;
+
+    if (keys.up) player.y -= player.speed;
+    if (keys.down) player.y += player.speed;
+
+    player.y = Math.max(
+        0,
+        Math.min(canvas.height - player.height, player.y)
+    );
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].x += bullets[i].speed;
+        if (bullets[i].x > canvas.width + 50) {
+            bullets.splice(i, 1);
+        }
+    }
+
+    for (let ei = enemies.length - 1; ei >= 0; ei--) {
+        const e = enemies[ei];
+        e.x -= e.speed;
+
+        if (e.x < -100) {
+            enemies.splice(ei, 1);
+            continue;
+        }
+
+        let enemyDestroyed = false;
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+            if (hit(e, bullets[bi])) {
+                bullets.splice(bi, 1);
+                enemies.splice(ei, 1);
+                enemyDestroyed = true;
+
+                score += 100;
+                createExplosion(e.x + e.width / 2, e.y + e.height / 2);
+                startShake(3, 8);
+                playSound(300, 0.06);
+
+                if (score >= 2000 && !bossSpawned) {
+                    spawnBoss();
+                }
+                break;
+            }
+        }
+
+        if (enemyDestroyed) continue;
+
+        if (hit(e, player)) {
+            enemies.splice(ei, 1);
+            player.hp -= 20;
+            createExplosion(
+                player.x + player.width / 2,
+                player.y + player.height / 2,
+                "#00ffff"
+            );
+            startShake(10, 15);
+            playSound(100, 0.15);
+        }
+    }
+
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const b = enemyBullets[i];
+        b.x += b.dx;
+        b.y += b.dy;
+
+        if (
+            b.x < -50 ||
+            b.x > canvas.width + 50 ||
+            b.y < -50 ||
+            b.y > canvas.height + 50
+        ) {
+            enemyBullets.splice(i, 1);
+            continue;
+        }
+
+        let bulletCleared = false;
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+            if (hit(b, bullets[bi])) {
+                enemyBullets.splice(i, 1);
+                bullets.splice(bi, 1);
+                bulletCleared = true;
+
+                shockwaves.push({
+                    x: b.x,
+                    y: b.y,
+                    radius: 5,
+                    alpha: 1
+                });
+                score += 10;
+
+                for (let j = 0; j < 3; j++) {
+                    createExplosion(b.x, b.y, "#ffff00");
+                }
+                createExplosion(b.x, b.y, "#ffffff");
+
+                startShake(6, 10);
+                playSound(900, 0.03);
+                setTimeout(() => playSound(1200, 0.03), 30);
+                break;
+            }
+        }
+
+        if (bulletCleared) continue;
+
+        if (hit(b, player)) {
+            enemyBullets.splice(i, 1);
+            player.hp -= 10;
+            createExplosion(
+                player.x + player.width / 2,
+                player.y + player.height / 2,
+                "#00ffff"
+            );
+            startShake(8, 12);
+            playSound(150, 0.15);
+        }
+    }
+
+    if (boss) {
+        boss.y += boss.speed * boss.dir;
+        if (boss.y < 0 || boss.y + boss.height > canvas.height) {
+            boss.dir *= -1;
+        }
+
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+            if (hit(bullets[bi], boss)) {
+                bullets.splice(bi, 1);
+                boss.hp--;
+                startShake(2, 4);
+
+                if (boss.hp <= 0) {
+                    for (let k = 0; k < 30; k++) {
+                        createExplosion(
+                            boss.x + Math.random() * boss.width,
+                            boss.y + Math.random() * boss.height,
+                            "#ff2200"
+                        );
+                    }
+                    startShake(30, 60);
+                    score += 2000;
+                    boss = null;
+                    bossContainer.classList.add("hidden");
+                    stopBossBGM();
+                    gameClear();
+                    break;
+                }
+            }
+        }
+
+        if (boss) {
+            bossFill.style.width = (boss.hp / boss.maxHp) * 100 + "%";
+        }
+    }
+
+    hpFill.style.width = Math.max(0, (player.hp / player.maxHp) * 100) + "%";
+    scoreEl.textContent = score;
+
+    if (player.hp <= 0) {
+        gameOver();
+    }
+}
+
+/* ==========================
+   DRAW
+========================== */
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    stars.forEach(star => {
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = 0.4 + star.speed / 4;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    ctx.save();
+
+    if (shakeTime > 0) {
+        ctx.translate(
+            (Math.random() - 0.5) * shakePower,
+            (Math.random() - 0.5) * shakePower
+        );
+    }
+
+    if (images.player) {
+        ctx.drawImage(images.player, player.x, player.y, player.width, player.height);
+    }
+
+    enemies.forEach(e => {
+        if (images.enemy) {
+            ctx.drawImage(images.enemy, e.x, e.y, e.width, e.height);
+        }
+    });
+
+    bullets.forEach(b => {
+        if (images.bullet) {
+            ctx.drawImage(images.bullet, b.x, b.y, b.width, b.height);
+        }
+    });
+
+    ctx.fillStyle = "#ff00ff";
+    enemyBullets.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    if (boss && images.boss) {
+        ctx.drawImage(images.boss, boss.x, boss.y, boss.width, boss.height);
+    }
+
+    explosions.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 30);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    shockwaves.forEach(s => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.alpha);
+        ctx.strokeStyle = "#ffff88";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    ctx.restore();
+}
+
+/* ==========================
+   LOOP & RESTART
+========================== */
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+restartBtn?.addEventListener("click", () => location.reload());
+clearRestartBtn?.addEventListener("click", () => location.reload());
+
+async function startGame() {
+    bossContainer.classList.add("hidden");
+    bossFill.style.width = "100%";
+    gameOverScreen.classList.add("hidden");
+    clearScreen.classList.add("hidden");
+
+    try {
+        await loadAssets();
+        loadRanking();
+        loadHighScore();
+        loop();
+    } catch (err) {
+        console.error("SVG読込エラー", err);
+        alert("assets/svg フォルダと SVG ファイルを確認してください");
+    }
+}
+
+startGame();
