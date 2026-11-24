@@ -248,33 +248,22 @@ body{
 ========================== */
 
 #warning{
-
     position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
 
-    inset:0;
-
-    display:flex;
-
-    justify-content:center;
-    align-items:center;
-
-    font-size:72px;
+    color:#ff4444;
+    font-size:40px;
     font-weight:bold;
 
+    background:none;
+
+    text-shadow:none;
+
+    animation:none;
+
     z-index:6000;
-
-    background:
-        rgba(0,0,0,.75);
-
-    color:#ff3333;
-
-    text-shadow:
-        0 0 20px #ff0000,
-        0 0 50px #ff0000;
-
-    animation:
-        warningBlink .4s infinite;
-
 }
 
 @keyframes warningBlink{
