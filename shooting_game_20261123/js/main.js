@@ -3,7 +3,7 @@
 ========================== */
 function finishGame(isClear) {
     setBGMMode("none");
-    warningFrames = 0;
+    warningFrames = 60;
     warningEl?.classList.add("hidden");
     gameRunning = false;
 
@@ -61,15 +61,17 @@ function startNewRun() {
     gameRunning = true;
     setBGMMode("normal");
 }
-
 function update() {
+
+    if (updateWarningCountdown()) {
+        return;
+    }
+
     updateStarsAndEffects();
 
     if (!gameRunning) return;
 
     updateBGM();
-
-    if (updateWarningCountdown()) return;
 
     updatePlayer();
     updateEnemiesAndBullets();
