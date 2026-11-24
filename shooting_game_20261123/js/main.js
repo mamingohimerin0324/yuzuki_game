@@ -50,9 +50,7 @@ function startNewRun() {
     score = 0;
     scoreEl.textContent = score;
 
-    bullets.length = 0;
-    explosions.length = 0;
-    shockwaves.length = 0;
+cleanupEffects();
 
     resetPlayer();
     resetEnemies();

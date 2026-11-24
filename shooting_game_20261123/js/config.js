@@ -23,6 +23,25 @@ const startBtn = document.getElementById("startBtn");
 const highScore = document.getElementById("highScore");
 const warningEl = document.getElementById("warning");
 
+
+/* ==========================
+   MEMORY CLEANUP
+========================== */
+function cleanupEffects() {
+
+    bullets.length = 0;
+    enemies.length = 0;
+    enemyBullets.length = 0;
+
+    explosions.length = 0;
+    shockwaves.length = 0;
+
+    shakePower = 0;
+    shakeTime = 0;
+}
+
+
+
 /* ==========================
    SHARED STATE & ARRAYS
 ========================== */

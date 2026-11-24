@@ -20,17 +20,20 @@ function triggerBossWarning() {
 
     if (bossSpawned || warningFrames > 0) return;
 
-    warningFrames = 60;
+    cleanupEffects();
 
-    enemies.length = 0;
-    enemyBullets.length = 0;
+    warningFrames = 60;
 
     warningEl?.classList.remove("hidden");
 
-    // setBGMMode("none");
+    setBGMMode("none");
 }
 function finalizeBossSpawn() {
+
+    cleanupEffects();
+
     warningEl?.classList.add("hidden");
+
     bossSpawned = true;
     bossShotFrames = 0;
 
@@ -48,22 +51,12 @@ function finalizeBossSpawn() {
         dir: 1
     };
 
-    for (let i = 0; i < 3; i++) {
-        createExplosion(
-            boss.x + Math.random() * boss.width * 0.6,
-            boss.y + Math.random() * boss.height * 0.6,
-            "#ff3300",
-            10
-        );
-    }
-
     startShake(6, 12);
-    playSound(80, 0.08);
+
     setTimeout(() => {
         setBGMMode("boss");
-    }, 300);
+    }, 200);
 }
-
 function updateWarningCountdown() {
     if (warningFrames <= 0) return false;
 
