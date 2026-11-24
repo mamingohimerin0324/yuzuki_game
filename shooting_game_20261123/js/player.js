@@ -1,6 +1,7 @@
 /* ==========================
    PLAYER
 ========================== */
+
 const player = {
     x: 0,
     y: 0,
@@ -11,22 +12,41 @@ const player = {
     maxHp: 100
 };
 
-const keys = {
-    up: false,
-    down: false
-};
+let moveX = 0;
+let moveY = 0;
+
+/* ==========================
+   RESET
+========================== */
 
 function resetPlayer() {
+
     player.x = 80;
     player.y = canvas.height / 2 - 30;
+
     player.hp = player.maxHp;
-    keys.up = false;
-    keys.down = false;
+
+    moveX = 0;
+    moveY = 0;
+
     hpFill.style.width = "100%";
 }
 
+/* ==========================
+   SHOOT
+========================== */
+
 function shoot() {
-    if (!gameRunning || (typeof warningFrames !== "undefined" && warningFrames > 0)) return;
+
+    if (
+        !gameRunning ||
+        (
+            typeof warningFrames !== "undefined" &&
+            warningFrames > 0
+        )
+    ) {
+        return;
+    }
 
     bullets.push({
         x: player.x + player.width,
@@ -39,86 +59,315 @@ function shoot() {
     playSound(800, 0.05);
 }
 
+/* ==========================
+   UPDATE
+========================== */
+
 function updatePlayer() {
-    if (keys.up) player.y -= player.speed;
-    if (keys.down) player.y += player.speed;
+
+    player.x += moveX * player.speed;
+    player.y += moveY * player.speed;
+
+    player.x = Math.max(
+        0,
+        Math.min(
+            canvas.width - player.width,
+            player.x
+        )
+    );
 
     player.y = Math.max(
         0,
-        Math.min(canvas.height - player.height, player.y)
+        Math.min(
+            canvas.height - player.height,
+            player.y
+        )
     );
 
     for (let i = bullets.length - 1; i >= 0; i--) {
+
         bullets[i].x += bullets[i].speed;
+
         if (bullets[i].x > canvas.width + 50) {
             bullets.splice(i, 1);
         }
     }
 
-    hpFill.style.width = Math.max(0, (player.hp / player.maxHp) * 100) + "%";
+    hpFill.style.width =
+        Math.max(
+            0,
+            (player.hp / player.maxHp) * 100
+        ) + "%";
 }
 
+/* ==========================
+   DRAW
+========================== */
+
 function drawPlayerAndBullets() {
+
     if (images.player) {
-        ctx.drawImage(images.player, player.x, player.y, player.width, player.height);
+        ctx.drawImage(
+            images.player,
+            player.x,
+            player.y,
+            player.width,
+            player.height
+        );
     }
 
     bullets.forEach(b => {
+
         if (images.bullet) {
-            ctx.drawImage(images.bullet, b.x, b.y, b.width, b.height);
+            ctx.drawImage(
+                images.bullet,
+                b.x,
+                b.y,
+                b.width,
+                b.height
+            );
         }
+
     });
+
 }
 
+/* ==========================
+   CONTROLS
+========================== */
+
 function bindPlayerControls() {
+
+    /* ----- PC Keyboard ----- */
+
     window.addEventListener("keydown", e => {
-        if (e.key === "ArrowUp") keys.up = true;
-        if (e.key === "ArrowDown") keys.down = true;
-        if (e.code === "Space") shoot();
+
+        if (e.key === "ArrowUp") {
+            moveY = -1;
+        }
+
+        if (e.key === "ArrowDown") {
+            moveY = 1;
+        }
+
+        if (e.key === "ArrowLeft") {
+            moveX = -1;
+        }
+
+        if (e.key === "ArrowRight") {
+            moveX = 1;
+        }
+
+        if (e.code === "Space") {
+            shoot();
+        }
+
     });
 
     window.addEventListener("keyup", e => {
-        if (e.key === "ArrowUp") keys.up = false;
-        if (e.key === "ArrowDown") keys.down = false;
-    });
 
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            keys.up = false;
-            keys.down = false;
+        if (
+            e.key === "ArrowUp" ||
+            e.key === "ArrowDown"
+        ) {
+            moveY = 0;
         }
+
+        if (
+            e.key === "ArrowLeft" ||
+            e.key === "ArrowRight"
+        ) {
+            moveX = 0;
+        }
+
     });
 
-    document.getElementById("fireBtn")?.addEventListener("touchstart", e => {
-        e.preventDefault();
-        unlockAudio();
-        shoot();
-    }, { passive: false });
+    /* ----- Tab Hidden ----- */
+
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+
+            if (document.hidden) {
+
+                moveX = 0;
+                moveY = 0;
+
+            }
+
+        }
+    );
+
+    /* ----- Fire Button ----- */
+
+    document
+        .getElementById("fireBtn")
+        ?.addEventListener(
+            "touchstart",
+            e => {
+
+                e.preventDefault();
+
+                unlockAudio();
+
+                shoot();
+
+            },
+            { passive: false }
+        );
 
     canvas.addEventListener("click", () => {
+
         unlockAudio();
+
         shoot();
+
     });
 
-    const upBtn = document.getElementById("upBtn");
-    const downBtn = document.getElementById("downBtn");
+    /* ==========================
+       JOYSTICK
+    ========================== */
 
-    upBtn?.addEventListener("touchstart", e => {
-        e.preventDefault();
-        unlockAudio();
-        keys.up = true;
-    }, { passive: false });
-    upBtn?.addEventListener("touchend", () => { keys.up = false; });
-    upBtn?.addEventListener("touchcancel", () => { keys.up = false; });
+    const joystick =
+        document.getElementById("joystick");
 
-    downBtn?.addEventListener("touchstart", e => {
-        e.preventDefault();
-        unlockAudio();
-        keys.down = true;
-    }, { passive: false });
-    downBtn?.addEventListener("touchend", () => { keys.down = false; });
-    downBtn?.addEventListener("touchcancel", () => { keys.down = false; });
+    const stick =
+        document.getElementById("stick");
+
+    if (!joystick || !stick) {
+        return;
+    }
+
+    let dragging = false;
+
+    function updateStick(touch) {
+
+        const rect =
+            joystick.getBoundingClientRect();
+
+        const centerX =
+            rect.left + rect.width / 2;
+
+        const centerY =
+            rect.top + rect.height / 2;
+
+        let dx =
+            touch.clientX - centerX;
+
+        let dy =
+            touch.clientY - centerY;
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+        const maxDistance =
+            rect.width * 0.35;
+
+        if (
+            distance > maxDistance &&
+            distance > 0
+        ) {
+
+            dx =
+                dx / distance *
+                maxDistance;
+
+            dy =
+                dy / distance *
+                maxDistance;
+        }
+
+        stick.style.left =
+            rect.width / 2 -
+            stick.offsetWidth / 2 +
+            dx +
+            "px";
+
+        stick.style.top =
+            rect.height / 2 -
+            stick.offsetHeight / 2 +
+            dy +
+            "px";
+
+        moveX = dx / maxDistance;
+        moveY = dy / maxDistance;
+    }
+
+    function resetJoystick() {
+
+        moveX = 0;
+        moveY = 0;
+
+        stick.style.left =
+            joystick.clientWidth / 2 -
+            stick.offsetWidth / 2 +
+            "px";
+
+        stick.style.top =
+            joystick.clientHeight / 2 -
+            stick.offsetHeight / 2 +
+            "px";
+    }
+
+    joystick.addEventListener(
+        "touchstart",
+        e => {
+
+            dragging = true;
+
+            unlockAudio();
+
+            updateStick(e.touches[0]);
+
+        },
+        { passive: false }
+    );
+
+    joystick.addEventListener(
+        "touchmove",
+        e => {
+
+            if (!dragging) return;
+
+            e.preventDefault();
+
+            updateStick(e.touches[0]);
+
+        },
+        { passive: false }
+    );
+
+    joystick.addEventListener(
+        "touchend",
+        () => {
+
+            dragging = false;
+
+            resetJoystick();
+
+        }
+    );
+
+    joystick.addEventListener(
+        "touchcancel",
+        () => {
+
+            dragging = false;
+
+            resetJoystick();
+
+        }
+    );
+
+    resetJoystick();
 }
+
+/* ==========================
+   INIT
+========================== */
 
 resetPlayer();
 bindPlayerControls();
