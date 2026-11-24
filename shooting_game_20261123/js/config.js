@@ -141,7 +141,7 @@ const BOSS_MELODY = [82, 98, 110, 82, 147, 110, 98, 73];
 function unlockAudio() {
     if (!audioCtx) return;
     if (audioCtx.state === "suspended") {
-        audioCtx.resume().catch(() => {});
+        audioCtx.resume().catch(() => { });
     }
 }
 
@@ -162,7 +162,7 @@ function playSound(freq, duration = 0.06) {
 
         osc.start(now);
         osc.stop(now + duration);
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function ensureBGMNodes() {
@@ -215,29 +215,52 @@ function setBGMMode(mode) {
             bgmOsc2.type = "square";
             bgmGain.gain.setTargetAtTime(0.025, now, 0.02);
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function updateBGM() {
-    if (bgmMode === "none" || !audioCtx || audioCtx.state !== "running") return;
+
+    if (
+        bgmMode === "none" ||
+        !audioCtx ||
+        audioCtx.state !== "running"
+    ) {
+        return;
+    }
+
     if (!bgmOsc1 || !bgmOsc2) return;
 
     bgmTimer++;
-    const intervalFrames = bgmMode === "boss" ? 13 : 18;
+
+    const intervalFrames =
+        bgmMode === "boss" ? 20 : 18;
+
     if (bgmTimer < intervalFrames) return;
+
     bgmTimer = 0;
 
-    const melody = bgmMode === "boss" ? BOSS_MELODY : NORMAL_MELODY;
-    const note = melody[bgmStep % melody.length];
+    const melody =
+        bgmMode === "boss"
+            ? BOSS_MELODY
+            : NORMAL_MELODY;
+
+    const note =
+        melody[bgmStep % melody.length];
+
     bgmStep++;
 
-    try {
-        const now = audioCtx.currentTime;
-        bgmOsc1.frequency.setValueAtTime(note, now);
-        bgmOsc2.frequency.setValueAtTime(note * 2, now);
-    } catch (e) {}
-}
+    const now = audioCtx.currentTime;
 
+    bgmOsc1.frequency.linearRampToValueAtTime(
+        note,
+        now + 0.05
+    );
+
+    bgmOsc2.frequency.linearRampToValueAtTime(
+        note * 2,
+        now + 0.05
+    );
+}
 /* ==========================
    ASSETS & EFFECTS & RANKING
 ========================== */

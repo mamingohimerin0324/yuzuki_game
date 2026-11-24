@@ -55,8 +55,10 @@ function finalizeBossSpawn() {
     }
 
     startShake(6, 12);
-    playSound(120, 0.08);
-    setBGMMode("boss");
+    playSound(80, 0.08);
+    setTimeout(() => {
+        setBGMMode("boss");
+    }, 300);
 }
 
 function updateWarningCountdown() {
