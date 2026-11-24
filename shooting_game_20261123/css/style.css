@@ -27,6 +27,7 @@
     z-index:3000;
 
     touch-action:none;
+      pointer-events:auto; /* 追加 */
 }
 
 #stick{
@@ -46,6 +47,7 @@
         0 0 20px rgba(0,180,255,.6);
 
     touch-action:none;
+     pointer-events:auto; /* 追加 */
 }
 @media screen and (max-width:767px){
 
@@ -455,8 +457,6 @@ body{
 
     inset:0;
 
-    pointer-events:none;
-
     z-index:3000;
 
 }
@@ -485,56 +485,6 @@ body{
 #mobilePad button:active{
 
     transform:scale(.92);
-
-}
-
-/* UP */
-
-#upBtn{
-
-    position:fixed;
-
-    left:30px;
-    bottom:170px;
-
-    width:110px;
-    height:110px;
-
-    font-size:42px;
-
-    background:
-        rgba(0,180,255,.35);
-
-    border:
-        2px solid rgba(255,255,255,.4);
-
-    box-shadow:
-        0 0 20px rgba(0,180,255,.45);
-
-}
-
-/* DOWN */
-
-#downBtn{
-
-    position:fixed;
-
-    left:30px;
-    bottom:35px;
-
-    width:110px;
-    height:110px;
-
-    font-size:42px;
-
-    background:
-        rgba(0,180,255,.35);
-
-    border:
-        2px solid rgba(255,255,255,.4);
-
-    box-shadow:
-        0 0 20px rgba(0,180,255,.45);
 
 }
 
