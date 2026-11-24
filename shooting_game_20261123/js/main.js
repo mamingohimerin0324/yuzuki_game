@@ -3,7 +3,7 @@
 ========================== */
 function finishGame(isClear) {
     setBGMMode("none");
-    warningFrames = 60;
+    warningFrames = 30;
     warningEl?.classList.add("hidden");
     gameRunning = false;
 
