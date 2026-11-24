@@ -120,7 +120,6 @@ function updatePlayer() {
 
     for (let i = bullets.length - 1; i >= 0; i--) {
 
-        bullets[i].x += bullets[i].speed;
         bullets[i].x += bullets[i].dx;
         bullets[i].y += bullets[i].dy;
         if (bullets[i].x > canvas.width + 50) {
