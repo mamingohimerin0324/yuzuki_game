@@ -3,41 +3,53 @@
 ========================== */
 let boss = null;
 let bossSpawned = false;
+let bossWarningActive = false; // 追加
+
 let warningFrames = 0;
 let bossShotFrames = 0;
 
 function resetBossState() {
+
     boss = null;
     bossSpawned = false;
+    bossWarningActive = false;
+
     warningFrames = 0;
     bossShotFrames = 0;
+
     warningEl?.classList.add("hidden");
     bossContainer.classList.add("hidden");
     bossFill.style.width = "100%";
 }
-
 function triggerBossWarning() {
 
-    if (bossSpawned || warningFrames > 0) return;
+    if (bossSpawned) return;
 
-    cleanupEffects();
+    if (bossWarningActive) return;
+
+    bossWarningActive = true;
 
     warningFrames = 60;
 
+    enemies.length = 0;
+    enemyBullets.length = 0;
+
     warningEl?.classList.remove("hidden");
 
-    setBGMMode("none");
+    console.log("WARNING START");
 }
 function finalizeBossSpawn() {
 
-    cleanupEffects();
+    bossWarningActive = false;
 
     warningEl?.classList.add("hidden");
 
     bossSpawned = true;
+
     bossShotFrames = 0;
 
     bossContainer.classList.remove("hidden");
+
     bossFill.style.width = "100%";
 
     boss = {

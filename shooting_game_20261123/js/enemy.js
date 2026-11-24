@@ -49,7 +49,11 @@ function updateEnemiesAndBullets() {
                 startShake(3, 8);
                 playSound(300, 0.06);
 
-                if (score >= 2000 && !bossSpawned) {
+                if (
+                    score >= 2000 &&
+                    !bossSpawned &&
+                    !bossWarningActive
+                ) {
                     triggerBossWarning();
                 }
                 break;
