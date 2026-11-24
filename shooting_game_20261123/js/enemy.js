@@ -45,6 +45,18 @@ function updateEnemiesAndBullets() {
                 enemyDestroyed = true;
 
                 score += 100;
+                if (Math.random() < 0.15) {
+
+                    items.push({
+                        x: e.x,
+                        y: e.y,
+                        width: 30,
+                        height: 30,
+                        speed: 2,
+                        type: "power"
+                    });
+
+                }
                 createExplosion(e.x + e.width / 2, e.y + e.height / 2);
                 startShake(3, 8);
                 playSound(300, 0.06);
@@ -143,4 +155,27 @@ function drawEnemiesAndBullets() {
         ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
         ctx.fill();
     });
+}
+function updateItems() {
+
+    for (let i = items.length - 1; i >= 0; i--) {
+
+        const item = items[i];
+
+        item.x -= item.speed;
+
+        if (item.x < -50) {
+            items.splice(i, 1);
+            continue;
+        }
+
+        if (hit(item, player)) {
+
+            weaponLevel = 2;
+
+            playSound(1200, 0.1);
+
+            items.splice(i, 1);
+        }
+    }
 }

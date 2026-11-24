@@ -23,7 +23,7 @@ const startBtn = document.getElementById("startBtn");
 const highScore = document.getElementById("highScore");
 const warningEl = document.getElementById("warning");
 
-
+const items = [];
 /* ==========================
    MEMORY CLEANUP
 ========================== */

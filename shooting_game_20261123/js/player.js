@@ -11,7 +11,7 @@ const player = {
     hp: 100,
     maxHp: 100
 };
-
+let weaponLevel = 1;
 let moveX = 0;
 let moveY = 0;
 
@@ -28,6 +28,8 @@ function resetPlayer() {
 
     moveX = 0;
     moveY = 0;
+
+    weaponLevel = 1;
 
     hpFill.style.width = "100%";
 }
@@ -48,17 +50,49 @@ function shoot() {
         return;
     }
 
-    bullets.push({
-        x: player.x + player.width,
-        y: player.y + player.height / 2 - 6,
-        width: 20,
-        height: 12,
-        speed: 12
-    });
+    if (weaponLevel === 1) {
+
+        bullets.push({
+            x: player.x + player.width,
+            y: player.y + player.height / 2 - 6,
+            width: 20,
+            height: 12,
+            dx: 12,
+            dy: 0
+        });
+
+    } else {
+
+        bullets.push(
+            {
+                x: player.x + player.width,
+                y: player.y + player.height / 2 - 6,
+                width: 20,
+                height: 12,
+                dx: 12,
+                dy: 0
+            },
+            {
+                x: player.x + player.width,
+                y: player.y + player.height / 2 - 6,
+                width: 20,
+                height: 12,
+                dx: 11,
+                dy: -2
+            },
+            {
+                x: player.x + player.width,
+                y: player.y + player.height / 2 - 6,
+                width: 20,
+                height: 12,
+                dx: 11,
+                dy: 2
+            }
+        );
+    }
 
     playSound(800, 0.05);
 }
-
 /* ==========================
    UPDATE
 ========================== */
@@ -87,7 +121,8 @@ function updatePlayer() {
     for (let i = bullets.length - 1; i >= 0; i--) {
 
         bullets[i].x += bullets[i].speed;
-
+        bullets[i].x += bullets[i].dx;
+        bullets[i].y += bullets[i].dy;
         if (bullets[i].x > canvas.width + 50) {
             bullets.splice(i, 1);
         }
