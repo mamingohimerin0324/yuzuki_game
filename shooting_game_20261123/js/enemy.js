@@ -169,13 +169,16 @@ function updateItems() {
             continue;
         }
 
-        if (hit(item, player)) {
+if (hit(item, player)) {
 
-            weaponLevel = 2;
+    weaponLevel = Math.min(
+        weaponLevel + 1,
+        3
+    );
 
-            playSound(1200, 0.1);
+    playSound(1200, 0.1);
 
-            items.splice(i, 1);
-        }
+    items.splice(i, 1);
+}
     }
 }

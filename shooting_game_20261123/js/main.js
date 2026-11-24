@@ -42,7 +42,8 @@ function gameClear() {
 
 function startNewRun() {
     unlockAudio();
-
+    items.length = 0;
+    weaponLevel = 1;
     titleScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
     clearScreen.classList.add("hidden");
@@ -50,7 +51,7 @@ function startNewRun() {
     score = 0;
     scoreEl.textContent = score;
 
-cleanupEffects();
+    cleanupEffects();
 
     resetPlayer();
     resetEnemies();
@@ -73,6 +74,7 @@ function update() {
 
     updatePlayer();
     updateEnemiesAndBullets();
+    updateItems();
     updateBoss();
 
     scoreEl.textContent = score;
@@ -88,6 +90,7 @@ function draw() {
     drawStarsAndEffects();
     drawPlayerAndBullets();
     drawEnemiesAndBullets();
+    drawItems();
     drawBoss();
     drawExplosionsAndShockwaves();
     endShakeTransform();
@@ -127,3 +130,38 @@ async function initGame() {
 }
 
 initGame();
+function drawItems() {
+
+    items.forEach(item => {
+
+        ctx.save();
+
+        ctx.fillStyle = "#ffff00";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            item.x + 15,
+            item.y + 15,
+            15,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = "#000";
+
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+            "P",
+            item.x + 15,
+            item.y + 21
+        );
+
+        ctx.restore();
+
+    });
+
+}
