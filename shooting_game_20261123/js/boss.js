@@ -17,15 +17,18 @@ function resetBossState() {
 }
 
 function triggerBossWarning() {
+
     if (bossSpawned || warningFrames > 0) return;
 
-    warningFrames = 60; // 約1秒（60fps換算）
+    warningFrames = 60;
+
     enemies.length = 0;
     enemyBullets.length = 0;
-    warningEl?.classList.remove("hidden");
-    setBGMMode("none");
-}
 
+    warningEl?.classList.remove("hidden");
+
+    // setBGMMode("none");
+}
 function finalizeBossSpawn() {
     warningEl?.classList.add("hidden");
     bossSpawned = true;
