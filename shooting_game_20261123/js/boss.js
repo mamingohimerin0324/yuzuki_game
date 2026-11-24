@@ -19,7 +19,7 @@ function resetBossState() {
 function triggerBossWarning() {
     if (bossSpawned || warningFrames > 0) return;
 
-    warningFrames = 120; // 約2秒（60fps換算）
+    warningFrames = 60; // 約1秒（60fps換算）
     enemies.length = 0;
     enemyBullets.length = 0;
     warningEl?.classList.remove("hidden");
@@ -45,7 +45,7 @@ function finalizeBossSpawn() {
         dir: 1
     };
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 3; i++) {
         createExplosion(
             boss.x + Math.random() * boss.width * 0.6,
             boss.y + Math.random() * boss.height * 0.6,
@@ -54,8 +54,8 @@ function finalizeBossSpawn() {
         );
     }
 
-    startShake(15, 25);
-    playSound(80, 0.2);
+    startShake(6, 12);
+    playSound(120, 0.08);
     setBGMMode("boss");
 }
 
