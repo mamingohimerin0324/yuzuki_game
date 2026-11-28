@@ -50,8 +50,9 @@ let gameRunning = false;
 
 let shakePower = 0;
 let shakeTime = 0;
-
-const MAX_EXPLOSIONS = 120;
+const MAX_BULLETS = 40;
+const MAX_EXPLOSIONS = 50;
+const MAX_SHOCKWAVES = 20;
 const bullets = [];
 const enemies = [];
 const enemyBullets = [];
@@ -69,7 +70,7 @@ function resizeCanvas() {
 
 function initStars() {
     stars.length = 0;
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 60; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,

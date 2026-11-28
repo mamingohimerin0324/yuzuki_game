@@ -1,3 +1,5 @@
+
+let lastScore = -1;
 /* ==========================
    GAME FLOW, LOOP & ENTRY
 ========================== */
@@ -49,7 +51,10 @@ function startNewRun() {
     clearScreen.classList.add("hidden");
 
     score = 0;
+   if (score !== lastScore) {
     scoreEl.textContent = score;
+    lastScore = score;
+}
 
     cleanupEffects();
 

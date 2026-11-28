@@ -11,9 +11,13 @@ const player = {
     hp: 100,
     maxHp: 100
 };
+
 let weaponLevel = 1;
 let moveX = 0;
 let moveY = 0;
+
+/* HPバー最適化 */
+let lastPlayerHp = -1;
 
 /* ==========================
    RESET
@@ -23,13 +27,14 @@ function resetPlayer() {
 
     player.x = 80;
     player.y = canvas.height / 2 - 30;
-
     player.hp = player.maxHp;
 
     moveX = 0;
     moveY = 0;
 
     weaponLevel = 1;
+
+    lastPlayerHp = player.hp;
 
     hpFill.style.width = "100%";
 }
@@ -39,6 +44,10 @@ function resetPlayer() {
 ========================== */
 
 function shoot() {
+
+    if (bullets.length >= MAX_BULLETS) {
+        return;
+    }
 
     if (
         !gameRunning ||
@@ -93,6 +102,7 @@ function shoot() {
 
     playSound(800, 0.05);
 }
+
 /* ==========================
    UPDATE
 ========================== */
@@ -118,20 +128,30 @@ function updatePlayer() {
         )
     );
 
+    /* BULLETS */
+
     for (let i = bullets.length - 1; i >= 0; i--) {
 
         bullets[i].x += bullets[i].dx;
         bullets[i].y += bullets[i].dy;
+
         if (bullets[i].x > canvas.width + 50) {
             bullets.splice(i, 1);
         }
     }
 
-    hpFill.style.width =
-        Math.max(
-            0,
-            (player.hp / player.maxHp) * 100
-        ) + "%";
+    /* HP BAR UPDATE */
+
+    if (player.hp !== lastPlayerHp) {
+
+        lastPlayerHp = player.hp;
+
+        hpFill.style.width =
+            Math.max(
+                0,
+                (player.hp / player.maxHp) * 100
+            ) + "%";
+    }
 }
 
 /* ==========================
@@ -141,6 +161,7 @@ function updatePlayer() {
 function drawPlayerAndBullets() {
 
     if (images.player) {
+
         ctx.drawImage(
             images.player,
             player.x,
@@ -153,6 +174,7 @@ function drawPlayerAndBullets() {
     bullets.forEach(b => {
 
         if (images.bullet) {
+
             ctx.drawImage(
                 images.bullet,
                 b.x,
@@ -161,9 +183,7 @@ function drawPlayerAndBullets() {
                 b.height
             );
         }
-
     });
-
 }
 
 /* ==========================
@@ -195,7 +215,6 @@ function bindPlayerControls() {
         if (e.code === "Space") {
             shoot();
         }
-
     });
 
     window.addEventListener("keyup", e => {
@@ -213,7 +232,6 @@ function bindPlayerControls() {
         ) {
             moveX = 0;
         }
-
     });
 
     /* ----- Tab Hidden ----- */
@@ -226,9 +244,7 @@ function bindPlayerControls() {
 
                 moveX = 0;
                 moveY = 0;
-
             }
-
         }
     );
 
@@ -245,7 +261,6 @@ function bindPlayerControls() {
                 unlockAudio();
 
                 shoot();
-
             },
             { passive: false }
         );
@@ -255,7 +270,6 @@ function bindPlayerControls() {
         unlockAudio();
 
         shoot();
-
     });
 
     /* ==========================
@@ -354,8 +368,9 @@ function bindPlayerControls() {
 
             unlockAudio();
 
-            updateStick(e.touches[0]);
-
+            updateStick(
+                e.touches[0]
+            );
         },
         { passive: false }
     );
@@ -368,8 +383,9 @@ function bindPlayerControls() {
 
             e.preventDefault();
 
-            updateStick(e.touches[0]);
-
+            updateStick(
+                e.touches[0]
+            );
         },
         { passive: false }
     );
@@ -381,7 +397,6 @@ function bindPlayerControls() {
             dragging = false;
 
             resetJoystick();
-
         }
     );
 
@@ -392,7 +407,6 @@ function bindPlayerControls() {
             dragging = false;
 
             resetJoystick();
-
         }
     );
 
