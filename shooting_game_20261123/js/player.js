@@ -1,4 +1,15 @@
 /* ==========================
+   MOUSE CONTROL
+========================== */
+
+let mouseX = 0;
+let mouseY = 0;
+
+let mouseControl = false;
+let mouseFiring = false;
+
+let autoFireFrame = 0;
+/* ==========================
    PLAYER
 ========================== */
 
@@ -37,6 +48,13 @@ function resetPlayer() {
     lastPlayerHp = player.hp;
 
     hpFill.style.width = "100%";
+    mouseX = player.x;
+    mouseY = player.y;
+
+    mouseControl = false;
+    mouseFiring = false;
+
+    autoFireFrame = 0;
 }
 
 /* ==========================
@@ -127,7 +145,20 @@ function updatePlayer() {
             player.y
         )
     );
+    if (mouseControl) {
 
+        const targetX =
+            mouseX - player.width / 2;
+
+        const targetY =
+            mouseY - player.height / 2;
+
+        player.x +=
+            (targetX - player.x) * 0.15;
+
+        player.y +=
+            (targetY - player.y) * 0.15;
+    }
     /* BULLETS */
 
     for (let i = bullets.length - 1; i >= 0; i--) {
@@ -151,6 +182,25 @@ function updatePlayer() {
                 0,
                 (player.hp / player.maxHp) * 100
             ) + "%";
+    }
+    if (
+        mouseControl &&
+        mouseFiring &&
+        gameRunning
+    ) {
+
+        autoFireFrame++;
+
+        if (autoFireFrame >= 6) {
+
+            autoFireFrame = 0;
+
+            shoot();
+        }
+
+    } else {
+
+        autoFireFrame = 0;
     }
 }
 
@@ -359,7 +409,54 @@ function bindPlayerControls() {
             stick.offsetHeight / 2 +
             "px";
     }
+    /* ==========================
+       PC MOUSE CONTROL
+    ========================== */
 
+    canvas.addEventListener(
+        "mousemove",
+        e => {
+
+            const rect =
+                canvas.getBoundingClientRect();
+
+            mouseX =
+                e.clientX - rect.left;
+
+            mouseY =
+                e.clientY - rect.top;
+
+            mouseControl = true;
+        }
+    );
+
+    canvas.addEventListener(
+        "mousedown",
+        () => {
+
+            mouseControl = true;
+
+            mouseFiring = true;
+
+            unlockAudio();
+        }
+    );
+
+    window.addEventListener(
+        "mouseup",
+        () => {
+
+            mouseFiring = false;
+        }
+    );
+
+    canvas.addEventListener(
+        "mouseleave",
+        () => {
+
+            mouseFiring = false;
+        }
+    );
     joystick.addEventListener(
         "touchstart",
         e => {
