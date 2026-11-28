@@ -292,19 +292,49 @@ function updateBoss() {
                 ========================== */
 
                 if (
-                    stage >=
-                    MAX_STAGE
+                    stage >= MAX_STAGE
                 ) {
+
+                    showStageMessage(
+                        "GAME CLEAR",
+                        180
+                    );
 
                     gameClear();
 
                 } else {
 
+                    const nextStage =
+                        stage + 1;
+
+                    showStageMessage(
+                        "STAGE " +
+                        stage +
+                        " CLEAR",
+                        120
+                    );
+
                     stage++;
 
                     updateStageDisplay();
-                }
 
+                    player.hp =
+                        player.maxHp;
+
+                    enemyBullets.length = 0;
+                    enemies.length = 0;
+
+                    setTimeout(() => {
+
+                        showStageMessage(
+                            "STAGE " +
+                            nextStage +
+                            " START",
+                            90
+                        );
+
+                    }, 2000);
+                }
                 break;
             }
         }

@@ -189,7 +189,7 @@ function draw() {
     drawItems();
 
     drawBoss();
-    drawWarningMessage();
+    drawStageMessage();
     drawExplosionsAndShockwaves();
 
     endShakeTransform();

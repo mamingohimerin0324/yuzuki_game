@@ -23,6 +23,8 @@ const startBtn = document.getElementById("startBtn");
 const highScore = document.getElementById("highScore");
 const warningEl = document.getElementById("warning");
 
+let stageMessage = "";
+let stageMessageTimer = 0;
 
 const items = [];
 /* ==========================
@@ -543,6 +545,54 @@ function drawWarningMessage() {
 
     ctx.fillText(
         text,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.restore();
+}
+function showStageMessage(text, frames = 120) {
+
+    stageMessage = text;
+    stageMessageTimer = frames;
+}
+function drawStageMessage() {
+
+    if (stageMessageTimer <= 0) {
+        return;
+    }
+
+    stageMessageTimer--;
+
+    const alpha =
+        Math.min(
+            1,
+            stageMessageTimer / 30
+        );
+
+    ctx.save();
+
+    ctx.globalAlpha = alpha;
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.textAlign = "center";
+
+    ctx.font =
+        "bold 72px Arial";
+
+    ctx.strokeStyle = "#00ffff";
+
+    ctx.lineWidth = 4;
+
+    ctx.strokeText(
+        stageMessage,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.fillText(
+        stageMessage,
         canvas.width / 2,
         canvas.height / 2
     );
