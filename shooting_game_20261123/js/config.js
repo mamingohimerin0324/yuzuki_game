@@ -23,6 +23,7 @@ const startBtn = document.getElementById("startBtn");
 const highScore = document.getElementById("highScore");
 const warningEl = document.getElementById("warning");
 
+
 const items = [];
 /* ==========================
    MEMORY CLEANUP
@@ -502,3 +503,49 @@ function saveRanking() {
 resizeCanvas();
 initStars();
 updateStageDisplay();
+function drawWarningMessage() {
+
+    if (!bossWarningActive) {
+        return;
+    }
+
+    const alpha =
+        0.5 +
+        Math.sin(
+            performance.now() * 0.02
+        ) * 0.5;
+
+    ctx.save();
+
+    ctx.globalAlpha = alpha;
+
+    ctx.fillStyle = "#ff3333";
+
+    ctx.textAlign = "center";
+
+    ctx.font =
+        "bold 72px Arial";
+
+    ctx.strokeStyle = "#ffffff";
+
+    ctx.lineWidth = 4;
+
+    const text =
+        stage >= MAX_STAGE
+        ? "FINAL WARNING"
+        : "WARNING";
+
+    ctx.strokeText(
+        text,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.fillText(
+        text,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.restore();
+}

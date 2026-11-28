@@ -1,7 +1,7 @@
 /* ==========================
    BOSS
 ========================== */
-
+let stageBossDefeated = false;
 let boss = null;
 
 let bossSpawned = false;
@@ -15,7 +15,7 @@ const MAX_ENEMY_BULLETS = 50;
 let lastBossHp = -1;
 
 function resetBossState() {
-
+    stageBossDefeated = false;
     boss = null;
 
     bossSpawned = false;
@@ -25,8 +25,6 @@ function resetBossState() {
     bossShotFrames = 0;
 
     lastBossHp = -1;
-
-    warningEl?.classList.add("hidden");
 
     bossContainer.classList.add("hidden");
 
@@ -45,15 +43,11 @@ function triggerBossWarning() {
 
     enemies.length = 0;
     enemyBullets.length = 0;
-
-    warningEl?.classList.remove("hidden");
 }
 
 function finalizeBossSpawn() {
 
     bossWarningActive = false;
-
-    warningEl?.classList.add("hidden");
 
     bossSpawned = true;
 
@@ -90,7 +84,7 @@ function finalizeBossSpawn() {
     };
 
     lastBossHp = boss.hp;
-
+    stageBossDefeated = false;
     bossFill.style.width = "100%";
 
     startShake(6, 12);
@@ -144,7 +138,7 @@ function updateBoss() {
     if (
         boss.y < 0 ||
         boss.y + boss.height >
-            canvas.height
+        canvas.height
     ) {
 
         boss.dir *= -1;
@@ -257,12 +251,12 @@ function updateBoss() {
                     createExplosion(
 
                         boss.x +
-                            Math.random() *
-                                boss.width,
+                        Math.random() *
+                        boss.width,
 
                         boss.y +
-                            Math.random() *
-                                boss.height,
+                        Math.random() *
+                        boss.height,
 
                         "#ff2200",
 
@@ -279,6 +273,7 @@ function updateBoss() {
                     stage * 2000;
 
                 boss = null;
+                stageBossDefeated = true;
 
                 bossContainer.classList.add(
                     "hidden"
@@ -322,7 +317,7 @@ function updateBoss() {
     if (
         boss &&
         boss.hp !==
-            lastBossHp
+        lastBossHp
     ) {
 
         lastBossHp =
@@ -333,7 +328,7 @@ function updateBoss() {
                 boss.hp /
                 boss.maxHp
             ) *
-                100 +
+            100 +
             "%";
     }
 }
