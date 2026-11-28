@@ -26,8 +26,6 @@ function resetBossState() {
 
     lastBossHp = -1;
 
-    warningEl?.classList.add("hidden");
-
     bossContainer.classList.add("hidden");
 
     bossFill.style.width = "100%";
@@ -45,15 +43,11 @@ function triggerBossWarning() {
 
     enemies.length = 0;
     enemyBullets.length = 0;
-
-    warningEl?.classList.remove("hidden");
 }
 
 function finalizeBossSpawn() {
 
     bossWarningActive = false;
-
-    warningEl?.classList.add("hidden");
 
     bossSpawned = true;
 
