@@ -384,7 +384,7 @@ function updateBoss() {
                     stage++;
 
                     updateStageDisplay();
-
+                    updateStageTheme();
                     player.hp =
                         player.maxHp;
 

@@ -82,9 +82,9 @@ const STAGE_BOSS_HP = {
 
 const STAGE_BOSS_SCORE = {
     1: 2000,
-    2: 5000,
-    3: 9000,
-    4: 14000
+    2: 4000,
+    3: 7000,
+    4: 10000
 };
 
 const stageDisplay =
@@ -92,7 +92,19 @@ const stageDisplay =
         "stageDisplay"
     );
 
+/* ==========================
+   STAGE THEME
+========================== */
 
+let stageTheme = {
+
+    bg1: "#081020",
+    bg2: "#000000",
+
+    star: "#ffffff",
+
+    ui: "#00ffff"
+};
 /* ==========================
    CANVAS & STARS
 ========================== */
@@ -424,6 +436,65 @@ function updateStageDisplay() {
             "STAGE " + stage;
     }
 }
+function updateStageTheme() {
+
+    switch (stage) {
+
+        case 1:
+
+            stageTheme = {
+
+                bg1: "#081020",
+                bg2: "#000000",
+
+                star: "#ffffff",
+
+                ui: "#00ffff"
+            };
+
+            break;
+
+        case 2:
+
+            stageTheme = {
+
+                bg1: "#1a0033",
+                bg2: "#000000",
+
+                star: "#ff77ff",
+
+                ui: "#ff77ff"
+            };
+
+            break;
+
+        case 3:
+
+            stageTheme = {
+
+                bg1: "#330000",
+                bg2: "#000000",
+
+                star: "#ff6666",
+
+                ui: "#ff4444"
+            };
+
+            break;
+
+        default:
+
+            stageTheme = {
+
+                bg1: "#180018",
+                bg2: "#000000",
+
+                star: "#ffff66",
+
+                ui: "#ffaa00"
+            };
+    }
+}
 function startShake(power, duration) {
     shakePower = Math.max(shakePower, power);
     shakeTime = Math.max(shakeTime, duration);
@@ -539,8 +610,8 @@ function drawWarningMessage() {
 
     const text =
         stage >= MAX_STAGE
-        ? "FINAL WARNING"
-        : "WARNING";
+            ? "FINAL WARNING"
+            : "WARNING";
 
     ctx.strokeText(
         text,
@@ -579,7 +650,7 @@ function drawStageMessage() {
 
     ctx.globalAlpha = alpha;
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = stageTheme.star;
 
     ctx.textAlign = "center";
 

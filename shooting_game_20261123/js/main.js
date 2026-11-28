@@ -72,7 +72,7 @@ function startNewRun() {
 
     score = 0;
     stage = 1;
-
+    updateStageTheme();
     lastScore = -1;
 
     items.length = 0;
@@ -155,7 +155,29 @@ function update() {
 
 function draw() {
 
-    ctx.clearRect(
+    const grad =
+        ctx.createRadialGradient(
+            canvas.width / 2,
+            canvas.height / 2,
+            0,
+            canvas.width / 2,
+            canvas.height / 2,
+            canvas.width
+        );
+
+    grad.addColorStop(
+        0,
+        stageTheme.bg1
+    );
+
+    grad.addColorStop(
+        1,
+        stageTheme.bg2
+    );
+
+    ctx.fillStyle = grad;
+
+    ctx.fillRect(
         0,
         0,
         canvas.width,
