@@ -121,17 +121,13 @@ body{
 }
 
 #score{
-
     font-size:28px;
     font-weight:bold;
-
-    margin-bottom:12px;
+    margin-bottom:8px;
 
     text-shadow:
         0 0 8px #00ffff;
-
 }
-
 /* ==========================
    HP BAR
 ========================== */
@@ -628,5 +624,47 @@ and (orientation:landscape){
 .hidden{
 
     display:none !important;
+
+}
+/* ==========================
+   STAGE DISPLAY
+========================== */
+
+#stageDisplay{
+    display:inline-block;
+
+    margin-bottom:12px;
+
+    padding:6px 14px;
+
+    font-size:20px;
+    font-weight:bold;
+    letter-spacing:2px;
+
+    color:#ffff66;
+
+    background:
+        rgba(0,0,0,.35);
+
+    border:
+        2px solid rgba(255,255,100,.35);
+
+    border-radius:999px;
+
+    text-shadow:
+        0 0 8px #ffff66;
+
+    box-shadow:
+        0 0 12px rgba(255,255,0,.25);
+}
+
+@media screen and (min-width:1024px){
+
+    #stageDisplay{
+
+        font-size:24px;
+
+        padding:8px 18px;
+    }
 
 }
