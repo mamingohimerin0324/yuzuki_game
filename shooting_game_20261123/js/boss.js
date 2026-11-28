@@ -132,7 +132,7 @@ function finalizeBossSpawn() {
             3 +
             (
                 stage - 1
-            ) * 0.5,
+            ) * 0.35,
 
         dir: 1
     };
@@ -222,11 +222,11 @@ function updateBoss() {
 
     const shotInterval =
         Math.max(
-            25,
+            36,
             60 -
             (
                 stage - 1
-            ) * 8
+            ) * 6
         );
 
     if (
@@ -236,24 +236,21 @@ function updateBoss() {
 
         bossShotFrames = 0;
 
+        /* 弾の広がり方（ステージ1〜2: ±2、ステージ3: ±3、ステージ4以上: ±4） */
         let spread = 2;
 
-        if (stage === 2) {
+        if (stage === 3) {
 
             spread = 3;
-
-        } else if (
-            stage === 3
-        ) {
-
-            spread = 4;
 
         } else if (
             stage >= 4
         ) {
 
-            spread = 5;
+            spread = 4;
         }
+
+        const dyStep = stage >= 3 ? 1.05 : 1.1;
 
         for (
             let i = -spread;
@@ -280,9 +277,9 @@ function updateBoss() {
                 width: 14,
                 height: 14,
 
-                dx: -6,
+                dx: -5.5,
 
-                dy: i * 1.2
+                dy: i * dyStep
             });
         }
     }
@@ -413,6 +410,7 @@ function updateBoss() {
                     );
 
                     stage++;
+                    stageStartScore = score;
                     stageBossDefeated = false;
 
                     if (typeof enemySpawnFrames !== "undefined") {

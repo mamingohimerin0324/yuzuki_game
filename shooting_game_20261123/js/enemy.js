@@ -24,10 +24,11 @@ function checkBossSpawnCondition() {
     }
 
     const targetScore = STAGE_BOSS_SCORE[stage];
+    const earnedInStage = score - stageStartScore;
 
     if (
         typeof targetScore === "number" &&
-        score >= targetScore
+        earnedInStage >= targetScore
     ) {
         triggerBossWarning();
     }
@@ -431,3 +432,4 @@ function updateItems() {
         }
     }
 }
+    

@@ -79,6 +79,7 @@ function startNewRun() {
     unlockAudio();
 
     score = 0;
+    stageStartScore = 0;
     stage = 1;
     updateStageTheme();
     lastScore = -1;
@@ -104,6 +105,8 @@ function startNewRun() {
     resetPlayer();
     resetEnemies();
     resetBossState();
+
+    stageStartScore = 0;
 
     updateStageDisplay();
 

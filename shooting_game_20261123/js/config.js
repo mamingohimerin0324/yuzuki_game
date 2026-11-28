@@ -43,6 +43,7 @@ function cleanupEffects() {
     shakeTime = 0;
 
     stage = 1;
+    stageStartScore = 0;
 
     updateStageDisplay();
 }
@@ -51,6 +52,7 @@ function cleanupEffects() {
    SHARED STATE & ARRAYS
 ========================== */
 let score = 0;
+let stageStartScore = 0;
 let gameRunning = false;
 
 let shakePower = 0;
@@ -73,18 +75,20 @@ let stage = 1;
 
 const MAX_STAGE = 4;
 
+/* ステージごとのボスHP（なだらかな上昇） */
 const STAGE_BOSS_HP = {
     1: 150,
-    2: 250,
-    3: 350,
-    4: 500
+    2: 200,
+    3: 270,
+    4: 360
 };
 
+/* 各ステージ内で獲得する目標スコア */
 const STAGE_BOSS_SCORE = {
     1: 2000,
-    2: 4000,
-    3: 7000,
-    4: 10000
+    2: 3000,
+    3: 4000,
+    4: 5000
 };
 
 const stageDisplay =
