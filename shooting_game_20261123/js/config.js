@@ -32,12 +32,15 @@ function cleanupEffects() {
     bullets.length = 0;
     enemies.length = 0;
     enemyBullets.length = 0;
-
     explosions.length = 0;
     shockwaves.length = 0;
 
     shakePower = 0;
     shakeTime = 0;
+
+    stage = 1;
+
+    updateStageDisplay();
 }
 
 
@@ -59,6 +62,33 @@ const enemyBullets = [];
 const explosions = [];
 const shockwaves = [];
 const stars = [];
+/* ==========================
+   STAGE SYSTEM
+========================== */
+
+let stage = 1;
+
+const MAX_STAGE = 4;
+
+const STAGE_BOSS_HP = {
+    1: 150,
+    2: 250,
+    3: 350,
+    4: 500
+};
+
+const STAGE_BOSS_SCORE = {
+    1: 2000,
+    2: 5000,
+    3: 9000,
+    4: 14000
+};
+
+const stageDisplay =
+    document.getElementById(
+        "stageDisplay"
+    );
+
 
 /* ==========================
    CANVAS & STARS
@@ -374,7 +404,23 @@ async function loadAssets() {
     images.boss = await loadImageAndCache("assets/svg/boss.svg", 240, 200);
     images.bullet = await loadImageAndCache("assets/svg/bullet.svg", 20, 12);
 }
+function updateStageDisplay() {
 
+    if (!stageDisplay) {
+        return;
+    }
+
+    if (stage >= MAX_STAGE) {
+
+        stageDisplay.textContent =
+            "FINAL STAGE";
+
+    } else {
+
+        stageDisplay.textContent =
+            "STAGE " + stage;
+    }
+}
 function startShake(power, duration) {
     shakePower = Math.max(shakePower, power);
     shakeTime = Math.max(shakeTime, duration);
@@ -455,3 +501,4 @@ function saveRanking() {
 
 resizeCanvas();
 initStars();
+updateStageDisplay();

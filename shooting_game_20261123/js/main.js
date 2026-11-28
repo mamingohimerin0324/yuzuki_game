@@ -63,6 +63,10 @@ function gameClear() {
     finishGame(true);
 }
 
+/* ==========================
+   NEW GAME
+========================== */
+
 function startNewRun() {
 
     unlockAudio();
@@ -71,21 +75,31 @@ function startNewRun() {
 
     weaponLevel = 1;
 
-    titleScreen.classList.add("hidden");
-
-    gameOverScreen.classList.add("hidden");
-
-    clearScreen.classList.add("hidden");
-
     score = 0;
 
+    stage = 1;
+
     lastScore = -1;
+
+    titleScreen.classList.add(
+        "hidden"
+    );
+
+    gameOverScreen.classList.add(
+        "hidden"
+    );
+
+    clearScreen.classList.add(
+        "hidden"
+    );
 
     cleanupEffects();
 
     resetPlayer();
     resetEnemies();
     resetBossState();
+
+    updateStageDisplay();
 
     gameRunning = true;
 
@@ -99,15 +113,17 @@ function startNewRun() {
 function update() {
 
     /*
-     * WARNING中でも背景や
-     * エフェクトは更新する
+     * 背景・エフェクトは
+     * 常時更新
      */
     updateStarsAndEffects();
 
     /*
-     * WARNING処理
+     * WARNING演出中
      */
-    if (updateWarningCountdown()) {
+    if (
+        updateWarningCountdown()
+    ) {
         return;
     }
 
@@ -126,15 +142,25 @@ function update() {
     updateBoss();
 
     /*
-     * スコア更新最適化
+     * SCORE更新最適化
      */
-    if (score !== lastScore) {
+    if (
+        score !== lastScore
+    ) {
 
         scoreEl.textContent = score;
 
         lastScore = score;
     }
 
+    /*
+     * STAGE表示更新
+     */
+    updateStageDisplay();
+
+    /*
+     * GAME OVER
+     */
     if (player.hp <= 0) {
 
         gameOver();
@@ -179,7 +205,9 @@ function loop() {
 
     draw();
 
-    requestAnimationFrame(loop);
+    requestAnimationFrame(
+        loop
+    );
 }
 
 /* ==========================
@@ -196,7 +224,8 @@ window.addEventListener(
 
         player.y = Math.min(
             player.y,
-            canvas.height - player.height
+            canvas.height -
+            player.height
         );
 
         initStars();
@@ -234,6 +263,8 @@ async function initGame() {
         "hidden"
     );
 
+    updateStageDisplay();
+
     try {
 
         await loadAssets();
@@ -269,7 +300,8 @@ function drawItems() {
 
         ctx.save();
 
-        ctx.fillStyle = "#ffff00";
+        ctx.fillStyle =
+            "#ffff00";
 
         ctx.beginPath();
 
@@ -283,11 +315,14 @@ function drawItems() {
 
         ctx.fill();
 
-        ctx.fillStyle = "#000";
+        ctx.fillStyle =
+            "#000";
 
-        ctx.font = "bold 16px Arial";
+        ctx.font =
+            "bold 16px Arial";
 
-        ctx.textAlign = "center";
+        ctx.textAlign =
+            "center";
 
         ctx.fillText(
             "P",

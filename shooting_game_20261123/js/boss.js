@@ -3,24 +3,27 @@
 ========================== */
 
 let boss = null;
+
 let bossSpawned = false;
 let bossWarningActive = false;
 
 let warningFrames = 0;
 let bossShotFrames = 0;
 
-/* 軽量化 */
 const MAX_ENEMY_BULLETS = 50;
+
 let lastBossHp = -1;
 
 function resetBossState() {
 
     boss = null;
+
     bossSpawned = false;
     bossWarningActive = false;
 
     warningFrames = 0;
     bossShotFrames = 0;
+
     lastBossHp = -1;
 
     warningEl?.classList.add("hidden");
@@ -33,6 +36,7 @@ function resetBossState() {
 function triggerBossWarning() {
 
     if (bossSpawned) return;
+
     if (bossWarningActive) return;
 
     bossWarningActive = true;
@@ -43,8 +47,6 @@ function triggerBossWarning() {
     enemyBullets.length = 0;
 
     warningEl?.classList.remove("hidden");
-
-    console.log("WARNING START");
 }
 
 function finalizeBossSpawn() {
@@ -54,24 +56,36 @@ function finalizeBossSpawn() {
     warningEl?.classList.add("hidden");
 
     bossSpawned = true;
+
     bossShotFrames = 0;
 
     bossContainer.classList.remove("hidden");
 
+    const bossHp =
+        STAGE_BOSS_HP[stage];
+
     boss = {
+
         x: Math.max(
             80,
             canvas.width - 280
         ),
+
         y: Math.max(
             0,
             canvas.height / 2 - 100
         ),
+
         width: 240,
         height: 200,
-        hp: 150,
-        maxHp: 150,
-        speed: 3,
+
+        hp: bossHp,
+        maxHp: bossHp,
+
+        speed:
+            3 +
+            (stage - 1) * 0.5,
+
         dir: 1
     };
 
@@ -82,8 +96,6 @@ function finalizeBossSpawn() {
     startShake(6, 12);
 
     setTimeout(() => {
-
-        console.log("BOSS BGM START");
 
         try {
 
@@ -103,12 +115,14 @@ function finalizeBossSpawn() {
 function updateWarningCountdown() {
 
     if (warningFrames <= 0) {
+
         return false;
     }
 
     warningFrames--;
 
     if (warningFrames === 0) {
+
         finalizeBossSpawn();
     }
 
@@ -123,12 +137,16 @@ function updateBoss() {
        MOVE
     ========================== */
 
-    boss.y += boss.speed * boss.dir;
+    boss.y +=
+        boss.speed *
+        boss.dir;
 
     if (
         boss.y < 0 ||
-        boss.y + boss.height > canvas.height
+        boss.y + boss.height >
+            canvas.height
     ) {
+
         boss.dir *= -1;
     }
 
@@ -138,26 +156,62 @@ function updateBoss() {
 
     bossShotFrames++;
 
-    if (bossShotFrames >= 60) {
+    const shotInterval =
+        Math.max(
+            25,
+            60 - (stage - 1) * 8
+        );
+
+    if (
+        bossShotFrames >=
+        shotInterval
+    ) {
 
         bossShotFrames = 0;
 
-        for (let i = -2; i <= 2; i++) {
+        let spread = 2;
+
+        if (stage === 2) {
+
+            spread = 3;
+
+        } else if (stage === 3) {
+
+            spread = 4;
+
+        } else if (stage === 4) {
+
+            spread = 5;
+        }
+
+        for (
+            let i = -spread;
+            i <= spread;
+            i++
+        ) {
 
             if (
                 enemyBullets.length >=
                 MAX_ENEMY_BULLETS
             ) {
+
                 enemyBullets.shift();
             }
 
             enemyBullets.push({
+
                 x: boss.x,
-                y: boss.y + boss.height / 2,
+
+                y:
+                    boss.y +
+                    boss.height / 2,
+
                 width: 14,
                 height: 14,
+
                 dx: -6,
-                dy: i * 1.5
+
+                dy: i * 1.2
             });
         }
     }
@@ -167,7 +221,8 @@ function updateBoss() {
     ========================== */
 
     for (
-        let bi = bullets.length - 1;
+        let bi =
+            bullets.length - 1;
         bi >= 0;
         bi--
     ) {
@@ -179,11 +234,17 @@ function updateBoss() {
             )
         ) {
 
-            bullets.splice(bi, 1);
+            bullets.splice(
+                bi,
+                1
+            );
 
             boss.hp--;
 
-            startShake(2, 4);
+            startShake(
+                2,
+                4
+            );
 
             if (boss.hp <= 0) {
 
@@ -194,13 +255,17 @@ function updateBoss() {
                 ) {
 
                     createExplosion(
+
                         boss.x +
-                        Math.random() *
-                        boss.width,
+                            Math.random() *
+                                boss.width,
+
                         boss.y +
-                        Math.random() *
-                        boss.height,
+                            Math.random() *
+                                boss.height,
+
                         "#ff2200",
+
                         6
                     );
                 }
@@ -210,7 +275,8 @@ function updateBoss() {
                     40
                 );
 
-                score += 2000;
+                score +=
+                    stage * 2000;
 
                 boss = null;
 
@@ -218,7 +284,31 @@ function updateBoss() {
                     "hidden"
                 );
 
-                gameClear();
+                enemyBullets.length = 0;
+
+                bossSpawned = false;
+
+                setBGMMode(
+                    "normal"
+                );
+
+                /* ==========================
+                   STAGE CLEAR
+                ========================== */
+
+                if (
+                    stage >=
+                    MAX_STAGE
+                ) {
+
+                    gameClear();
+
+                } else {
+
+                    stage++;
+
+                    updateStageDisplay();
+                }
 
                 break;
             }
@@ -231,16 +321,20 @@ function updateBoss() {
 
     if (
         boss &&
-        boss.hp !== lastBossHp
+        boss.hp !==
+            lastBossHp
     ) {
 
-        lastBossHp = boss.hp;
+        lastBossHp =
+            boss.hp;
 
         bossFill.style.width =
             (
                 boss.hp /
                 boss.maxHp
-            ) * 100 + "%";
+            ) *
+                100 +
+            "%";
     }
 }
 
@@ -252,9 +346,12 @@ function drawBoss() {
     ) {
 
         ctx.drawImage(
+
             images.boss,
+
             boss.x,
             boss.y,
+
             boss.width,
             boss.height
         );

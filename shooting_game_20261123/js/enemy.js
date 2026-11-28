@@ -5,7 +5,9 @@
 let enemySpawnFrames = 0;
 
 function resetEnemies() {
+
     enemySpawnFrames = 0;
+
     enemies.length = 0;
     enemyBullets.length = 0;
 }
@@ -22,16 +24,36 @@ function updateEnemySpawner() {
 
     enemySpawnFrames++;
 
-    if (enemySpawnFrames >= 60) {
+    /* ステージごとに出現数UP */
+
+    const spawnInterval =
+        Math.max(
+            20,
+            60 - (stage - 1) * 10
+        );
+
+    if (enemySpawnFrames >= spawnInterval) {
 
         enemySpawnFrames = 0;
 
         enemies.push({
             x: canvas.width + 60,
-            y: Math.random() * Math.max(10, canvas.height - 50),
+
+            y:
+                Math.random() *
+                Math.max(
+                    10,
+                    canvas.height - 50
+                ),
+
             width: 50,
             height: 50,
-            speed: 2
+
+            /* ステージごとに速度UP */
+
+            speed:
+                2 +
+                (stage - 1) * 0.5
         });
     }
 }
@@ -44,38 +66,55 @@ function updateEnemiesAndBullets() {
        ENEMIES
     ========================== */
 
-    for (let ei = enemies.length - 1; ei >= 0; ei--) {
+    for (
+        let ei = enemies.length - 1;
+        ei >= 0;
+        ei--
+    ) {
 
         const e = enemies[ei];
 
         e.x -= e.speed;
 
         if (e.x < -100) {
+
             enemies.splice(ei, 1);
+
             continue;
         }
 
         let enemyDestroyed = false;
 
-        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+        for (
+            let bi = bullets.length - 1;
+            bi >= 0;
+            bi--
+        ) {
 
             if (hit(e, bullets[bi])) {
 
                 bullets.splice(bi, 1);
+
                 enemies.splice(ei, 1);
 
                 enemyDestroyed = true;
 
                 score += 100;
 
-                if (Math.random() < 0.15) {
+                if (
+                    Math.random() < 0.15
+                ) {
 
                     items.push({
+
                         x: e.x,
                         y: e.y,
+
                         width: 30,
                         height: 30,
+
                         speed: 2,
+
                         type: "power"
                     });
                 }
@@ -87,13 +126,26 @@ function updateEnemiesAndBullets() {
 
                 startShake(3, 8);
 
-                playSound(300, 0.06);
+                playSound(
+                    300,
+                    0.06
+                );
+
+                /* ==========================
+                   STAGE別ボス出現
+                ========================== */
+
+                const targetScore =
+                    STAGE_BOSS_SCORE[
+                        stage
+                    ];
 
                 if (
-                    score >= 2000 &&
+                    score >= targetScore &&
                     !bossSpawned &&
                     !bossWarningActive
                 ) {
+
                     triggerBossWarning();
                 }
 
@@ -115,14 +167,22 @@ function updateEnemiesAndBullets() {
             player.hp -= 20;
 
             createExplosion(
-                player.x + player.width / 2,
-                player.y + player.height / 2,
+                player.x +
+                    player.width / 2,
+                player.y +
+                    player.height / 2,
                 "#00ffff"
             );
 
-            startShake(10, 15);
+            startShake(
+                10,
+                15
+            );
 
-            playSound(100, 0.15);
+            playSound(
+                100,
+                0.15
+            );
         }
     }
 
@@ -130,20 +190,29 @@ function updateEnemiesAndBullets() {
        ENEMY BULLETS
     ========================== */
 
-    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    for (
+        let i = enemyBullets.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        const b = enemyBullets[i];
+        const b =
+            enemyBullets[i];
 
         b.x += b.dx;
         b.y += b.dy;
 
         if (
             b.x < -50 ||
-            b.x > canvas.width + 50 ||
+            b.x >
+                canvas.width + 50 ||
             b.y < -50 ||
-            b.y > canvas.height + 50
+            b.y >
+                canvas.height + 50
         ) {
+
             enemyBullets.splice(i, 1);
+
             continue;
         }
 
@@ -153,30 +222,51 @@ function updateEnemiesAndBullets() {
            BULLET VS BULLET
         ========================== */
 
-        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+        for (
+            let bi =
+                bullets.length - 1;
+            bi >= 0;
+            bi--
+        ) {
 
-            if (hit(b, bullets[bi])) {
+            if (
+                hit(
+                    b,
+                    bullets[bi]
+                )
+            ) {
 
-                enemyBullets.splice(i, 1);
-                bullets.splice(bi, 1);
+                enemyBullets.splice(
+                    i,
+                    1
+                );
+
+                bullets.splice(
+                    bi,
+                    1
+                );
 
                 bulletCleared = true;
 
-                /* Shockwave 上限 */
-                if (shockwaves.length >= MAX_SHOCKWAVES) {
+                if (
+                    shockwaves.length >=
+                    MAX_SHOCKWAVES
+                ) {
+
                     shockwaves.shift();
                 }
 
                 shockwaves.push({
+
                     x: b.x,
                     y: b.y,
+
                     radius: 5,
                     alpha: 1
                 });
 
                 score += 10;
 
-                /* 軽量化版エフェクト */
                 createExplosion(
                     b.x,
                     b.y,
@@ -191,13 +281,16 @@ function updateEnemiesAndBullets() {
                     2
                 );
 
-                startShake(2, 4);
+                startShake(
+                    2,
+                    4
+                );
 
                 /*
-                 * 重いので無効化
-                 * Safari/iPad対策
+                 * 相殺音停止
+                 * Safari対策
                  */
-                // playSound(900, 0.03);
+                // playSound(900,0.03);
 
                 break;
             }
@@ -211,21 +304,37 @@ function updateEnemiesAndBullets() {
            PLAYER HIT
         ========================== */
 
-        if (hit(b, player)) {
+        if (
+            hit(
+                b,
+                player
+            )
+        ) {
 
-            enemyBullets.splice(i, 1);
+            enemyBullets.splice(
+                i,
+                1
+            );
 
             player.hp -= 10;
 
             createExplosion(
-                player.x + player.width / 2,
-                player.y + player.height / 2,
+                player.x +
+                    player.width / 2,
+                player.y +
+                    player.height / 2,
                 "#00ffff"
             );
 
-            startShake(8, 12);
+            startShake(
+                8,
+                12
+            );
 
-            playSound(150, 0.15);
+            playSound(
+                150,
+                0.15
+            );
         }
     }
 }
@@ -237,16 +346,20 @@ function drawEnemiesAndBullets() {
         if (images.enemy) {
 
             ctx.drawImage(
+
                 images.enemy,
+
                 e.x,
                 e.y,
+
                 e.width,
                 e.height
             );
         }
     });
 
-    ctx.fillStyle = "#ff00ff";
+    ctx.fillStyle =
+        "#ff00ff";
 
     enemyBullets.forEach(b => {
 
@@ -266,7 +379,11 @@ function drawEnemiesAndBullets() {
 
 function updateItems() {
 
-    for (let i = items.length - 1; i >= 0; i--) {
+    for (
+        let i = items.length - 1;
+        i >= 0;
+        i--
+    ) {
 
         const item = items[i];
 
@@ -279,14 +396,23 @@ function updateItems() {
             continue;
         }
 
-        if (hit(item, player)) {
+        if (
+            hit(
+                item,
+                player
+            )
+        ) {
 
-            weaponLevel = Math.min(
-                weaponLevel + 1,
-                3
+            weaponLevel =
+                Math.min(
+                    weaponLevel + 1,
+                    3
+                );
+
+            playSound(
+                1200,
+                0.1
             );
-
-            playSound(1200, 0.1);
 
             items.splice(i, 1);
         }
