@@ -1,16 +1,23 @@
-
 let lastScore = -1;
+
 /* ==========================
    GAME FLOW, LOOP & ENTRY
 ========================== */
+
 function finishGame(isClear) {
+
     setBGMMode("none");
+
     warningFrames = 30;
+
     warningEl?.classList.add("hidden");
+
     gameRunning = false;
 
     if (!isClear) {
+
         for (let i = 0; i < 15; i++) {
+
             createExplosion(
                 player.x + player.width / 2,
                 player.y + player.height / 2,
@@ -18,6 +25,7 @@ function finishGame(isClear) {
                 10
             );
         }
+
         startShake(18, 35);
     }
 
@@ -26,35 +34,52 @@ function finishGame(isClear) {
     loadHighScore();
 
     if (isClear) {
-        clearScore.textContent = "SCORE : " + score;
-        clearScreen.classList.remove("hidden");
+
+        clearScore.textContent =
+            "SCORE : " + score;
+
+        clearScreen.classList.remove(
+            "hidden"
+        );
+
     } else {
-        finalScore.textContent = "SCORE : " + score;
-        gameOverScreen.classList.remove("hidden");
+
+        finalScore.textContent =
+            "SCORE : " + score;
+
+        gameOverScreen.classList.remove(
+            "hidden"
+        );
     }
 }
 
 function gameOver() {
+
     finishGame(false);
 }
 
 function gameClear() {
+
     finishGame(true);
 }
 
 function startNewRun() {
+
     unlockAudio();
+
     items.length = 0;
+
     weaponLevel = 1;
+
     titleScreen.classList.add("hidden");
+
     gameOverScreen.classList.add("hidden");
+
     clearScreen.classList.add("hidden");
 
     score = 0;
-   if (score !== lastScore) {
-    scoreEl.textContent = score;
-    lastScore = score;
-}
+
+    lastScore = -1;
 
     cleanupEffects();
 
@@ -63,78 +88,181 @@ function startNewRun() {
     resetBossState();
 
     gameRunning = true;
+
     setBGMMode("normal");
 }
+
+/* ==========================
+   UPDATE
+========================== */
+
 function update() {
 
+    /*
+     * WARNING中でも背景や
+     * エフェクトは更新する
+     */
+    updateStarsAndEffects();
+
+    /*
+     * WARNING処理
+     */
     if (updateWarningCountdown()) {
         return;
     }
 
-    updateStarsAndEffects();
-
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        return;
+    }
 
     updateBGM();
 
     updatePlayer();
+
     updateEnemiesAndBullets();
+
     updateItems();
+
     updateBoss();
 
-    scoreEl.textContent = score;
+    /*
+     * スコア更新最適化
+     */
+    if (score !== lastScore) {
+
+        scoreEl.textContent = score;
+
+        lastScore = score;
+    }
 
     if (player.hp <= 0) {
+
         gameOver();
     }
 }
 
+/* ==========================
+   DRAW
+========================== */
+
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
     drawStarsAndEffects();
+
     drawPlayerAndBullets();
+
     drawEnemiesAndBullets();
+
     drawItems();
+
     drawBoss();
+
     drawExplosionsAndShockwaves();
+
     endShakeTransform();
 }
 
+/* ==========================
+   MAIN LOOP
+========================== */
+
 function loop() {
+
     update();
+
     draw();
+
     requestAnimationFrame(loop);
 }
 
-window.addEventListener("resize", () => {
-    resizeCanvas();
-    player.x = 80;
-    player.y = Math.min(player.y, canvas.height - player.height);
-    initStars();
-});
+/* ==========================
+   EVENTS
+========================== */
 
-startBtn.addEventListener("click", startNewRun);
-restartBtn?.addEventListener("click", () => location.reload());
-clearRestartBtn?.addEventListener("click", () => location.reload());
+window.addEventListener(
+    "resize",
+    () => {
+
+        resizeCanvas();
+
+        player.x = 80;
+
+        player.y = Math.min(
+            player.y,
+            canvas.height - player.height
+        );
+
+        initStars();
+    }
+);
+
+startBtn.addEventListener(
+    "click",
+    startNewRun
+);
+
+restartBtn?.addEventListener(
+    "click",
+    () => location.reload()
+);
+
+clearRestartBtn?.addEventListener(
+    "click",
+    () => location.reload()
+);
+
+/* ==========================
+   INIT
+========================== */
 
 async function initGame() {
+
     resetBossState();
-    gameOverScreen.classList.add("hidden");
-    clearScreen.classList.add("hidden");
+
+    gameOverScreen.classList.add(
+        "hidden"
+    );
+
+    clearScreen.classList.add(
+        "hidden"
+    );
 
     try {
+
         await loadAssets();
+
         loadRanking();
+
         loadHighScore();
+
         loop();
+
     } catch (err) {
-        console.error("SVG読込エラー", err);
-        alert("assets/svg フォルダと SVG ファイルを確認してください");
+
+        console.error(
+            "SVG読込エラー",
+            err
+        );
+
+        alert(
+            "assets/svg フォルダと SVG ファイルを確認してください"
+        );
     }
 }
 
 initGame();
+
+/* ==========================
+   ITEM DRAW
+========================== */
+
 function drawItems() {
 
     items.forEach(item => {
@@ -158,7 +286,9 @@ function drawItems() {
         ctx.fillStyle = "#000";
 
         ctx.font = "bold 16px Arial";
+
         ctx.textAlign = "center";
+
         ctx.fillText(
             "P",
             item.x + 15,
@@ -166,7 +296,5 @@ function drawItems() {
         );
 
         ctx.restore();
-
     });
-
 }

@@ -214,30 +214,92 @@ function ensureBGMNodes() {
 }
 
 function setBGMMode(mode) {
+
+    if (bgmMode === mode) {
+        return;
+    }
+
     bgmMode = mode;
+
     bgmStep = 0;
     bgmTimer = 0;
 
-    if (!audioCtx) return;
+    if (!audioCtx) {
+        return;
+    }
+
+    if (audioCtx.state !== "running") {
+        return;
+    }
+
     ensureBGMNodes();
-    if (!bgmGain || !bgmOsc1 || !bgmOsc2) return;
+
+    if (
+        !bgmGain ||
+        !bgmOsc1 ||
+        !bgmOsc2
+    ) {
+        return;
+    }
 
     try {
-        const now = audioCtx.currentTime;
-        if (mode === "none") {
-            bgmGain.gain.setTargetAtTime(0, now, 0.02);
-        } else if (mode === "normal") {
-            bgmOsc1.type = "sawtooth";
-            bgmOsc2.type = "triangle";
-            bgmGain.gain.setTargetAtTime(0.02, now, 0.02);
-        } else if (mode === "boss") {
-            bgmOsc1.type = "sawtooth";
-            bgmOsc2.type = "square";
-            bgmGain.gain.setTargetAtTime(0.025, now, 0.02);
-        }
-    } catch (e) { }
-}
 
+        const now =
+            audioCtx.currentTime;
+
+        bgmGain.gain.cancelScheduledValues(
+            now
+        );
+
+        bgmGain.gain.setValueAtTime(
+            bgmGain.gain.value,
+            now
+        );
+
+        switch (mode) {
+
+            case "none":
+
+                bgmGain.gain.linearRampToValueAtTime(
+                    0,
+                    now + 0.1
+                );
+
+                break;
+
+            case "normal":
+
+                bgmOsc1.type = "sawtooth";
+                bgmOsc2.type = "triangle";
+
+                bgmGain.gain.linearRampToValueAtTime(
+                    0.02,
+                    now + 0.1
+                );
+
+                break;
+
+            case "boss":
+
+                bgmOsc1.type = "sawtooth";
+                bgmOsc2.type = "square";
+
+                bgmGain.gain.linearRampToValueAtTime(
+                    0.025,
+                    now + 0.1
+                );
+
+                break;
+        }
+
+    } catch (err) {
+
+        console.error(
+            "BGM MODE ERROR",
+            err
+        );
+    }
+}
 function updateBGM() {
 
     if (

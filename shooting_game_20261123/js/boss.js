@@ -82,7 +82,21 @@ function finalizeBossSpawn() {
     startShake(6, 12);
 
     setTimeout(() => {
-        setBGMMode("boss");
+
+        console.log("BOSS BGM START");
+
+        try {
+
+            setBGMMode("boss");
+
+        } catch (e) {
+
+            console.error(
+                "Boss BGM Error",
+                e
+            );
+        }
+
     }, 200);
 }
 
@@ -181,11 +195,11 @@ function updateBoss() {
 
                     createExplosion(
                         boss.x +
-                            Math.random() *
-                                boss.width,
+                        Math.random() *
+                        boss.width,
                         boss.y +
-                            Math.random() *
-                                boss.height,
+                        Math.random() *
+                        boss.height,
                         "#ff2200",
                         6
                     );
