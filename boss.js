@@ -15,7 +15,7 @@ const MAX_ENEMY_BULLETS = 50;
 let lastBossHp = -1;
 
 function resetBossState() {
-
+    stageBossDefeated = false;
     boss = null;
 
     bossSpawned = false;
@@ -90,7 +90,7 @@ function finalizeBossSpawn() {
     };
 
     lastBossHp = boss.hp;
-    let stageBossDefeated = false;
+    stageBossDefeated = false;
     bossFill.style.width = "100%";
 
     startShake(6, 12);
