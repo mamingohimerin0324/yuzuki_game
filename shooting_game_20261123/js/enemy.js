@@ -24,8 +24,6 @@ function updateEnemySpawner() {
 
     enemySpawnFrames++;
 
-    /* ステージごとに出現数UP */
-
     const spawnInterval =
         Math.max(
             20,
@@ -38,19 +36,13 @@ function updateEnemySpawner() {
 
         enemies.push({
             x: canvas.width + 60,
-
-            y:
-                Math.random() *
+            y: Math.random() *
                 Math.max(
                     10,
                     canvas.height - 50
                 ),
-
             width: 50,
             height: 50,
-
-            /* ステージごとに速度UP */
-
             speed:
                 2 +
                 (stage - 1) * 0.5
@@ -74,6 +66,8 @@ function updateEnemiesAndBullets() {
 
         const e = enemies[ei];
 
+        if (!e) continue;
+
         e.x -= e.speed;
 
         if (e.x < -100) {
@@ -91,7 +85,13 @@ function updateEnemiesAndBullets() {
             bi--
         ) {
 
-            if (hit(e, bullets[bi])) {
+            const bullet = bullets[bi];
+
+            if (!bullet) {
+                continue;
+            }
+
+            if (hit(e, bullet)) {
 
                 bullets.splice(bi, 1);
 
@@ -101,20 +101,14 @@ function updateEnemiesAndBullets() {
 
                 score += 100;
 
-                if (
-                    Math.random() < 0.15
-                ) {
+                if (Math.random() < 0.15) {
 
                     items.push({
-
                         x: e.x,
                         y: e.y,
-
                         width: 30,
                         height: 30,
-
                         speed: 2,
-
                         type: "power"
                     });
                 }
@@ -131,10 +125,6 @@ function updateEnemiesAndBullets() {
                     0.06
                 );
 
-                /* ==========================
-                   STAGE別ボス出現
-                ========================== */
-
                 const targetScore =
                     STAGE_BOSS_SCORE[
                         stage
@@ -143,7 +133,8 @@ function updateEnemiesAndBullets() {
                 if (
                     score >= targetScore &&
                     !bossSpawned &&
-                    !bossWarningActive
+                    !bossWarningActive &&
+                    !stageBossDefeated
                 ) {
 
                     triggerBossWarning();
@@ -168,9 +159,9 @@ function updateEnemiesAndBullets() {
 
             createExplosion(
                 player.x +
-                    player.width / 2,
+                player.width / 2,
                 player.y +
-                    player.height / 2,
+                player.height / 2,
                 "#00ffff"
             );
 
@@ -199,16 +190,18 @@ function updateEnemiesAndBullets() {
         const b =
             enemyBullets[i];
 
+        if (!b) {
+            continue;
+        }
+
         b.x += b.dx;
         b.y += b.dy;
 
         if (
             b.x < -50 ||
-            b.x >
-                canvas.width + 50 ||
+            b.x > canvas.width + 50 ||
             b.y < -50 ||
-            b.y >
-                canvas.height + 50
+            b.y > canvas.height + 50
         ) {
 
             enemyBullets.splice(i, 1);
@@ -229,10 +222,17 @@ function updateEnemiesAndBullets() {
             bi--
         ) {
 
+            const bullet =
+                bullets[bi];
+
+            if (!bullet) {
+                continue;
+            }
+
             if (
                 hit(
                     b,
-                    bullets[bi]
+                    bullet
                 )
             ) {
 
@@ -260,7 +260,6 @@ function updateEnemiesAndBullets() {
 
                     x: b.x,
                     y: b.y,
-
                     radius: 5,
                     alpha: 1
                 });
@@ -287,10 +286,9 @@ function updateEnemiesAndBullets() {
                 );
 
                 /*
-                 * 相殺音停止
                  * Safari対策
                  */
-                // playSound(900,0.03);
+                // playSound(900, 0.03);
 
                 break;
             }
@@ -320,9 +318,9 @@ function updateEnemiesAndBullets() {
 
             createExplosion(
                 player.x +
-                    player.width / 2,
+                player.width / 2,
                 player.y +
-                    player.height / 2,
+                player.height / 2,
                 "#00ffff"
             );
 
@@ -343,25 +341,25 @@ function drawEnemiesAndBullets() {
 
     enemies.forEach(e => {
 
+        if (!e) return;
+
         if (images.enemy) {
 
             ctx.drawImage(
-
                 images.enemy,
-
                 e.x,
                 e.y,
-
                 e.width,
                 e.height
             );
         }
     });
 
-    ctx.fillStyle =
-        "#ff00ff";
+    ctx.fillStyle = "#ff00ff";
 
     enemyBullets.forEach(b => {
+
+        if (!b) return;
 
         ctx.beginPath();
 
@@ -386,6 +384,10 @@ function updateItems() {
     ) {
 
         const item = items[i];
+
+        if (!item) {
+            continue;
+        }
 
         item.x -= item.speed;
 

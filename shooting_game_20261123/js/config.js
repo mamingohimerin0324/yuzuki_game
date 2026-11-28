@@ -470,6 +470,11 @@ function drawExplosionsAndShockwaves() {
 }
 
 function hit(a, b) {
+
+    if (!a || !b) {
+        return false;
+    }
+
     return (
         a.x < b.x + b.width &&
         a.x + a.width > b.x &&
