@@ -14,12 +14,31 @@ let bossShotFrames = 0;
 const MAX_ENEMY_BULLETS = 50;
 
 let lastBossHp = -1;
+let nextStageMessageTimeoutId = null;
+let gameClearTimeoutId = null;
 
 /* ==========================
    RESET
 ========================== */
 
+function clearStageTimers() {
+
+    if (nextStageMessageTimeoutId !== null) {
+
+        clearTimeout(nextStageMessageTimeoutId);
+        nextStageMessageTimeoutId = null;
+    }
+
+    if (gameClearTimeoutId !== null) {
+
+        clearTimeout(gameClearTimeoutId);
+        gameClearTimeoutId = null;
+    }
+}
+
 function resetBossState() {
+
+    clearStageTimers();
 
     stageBossDefeated = false;
 
@@ -50,10 +69,15 @@ function triggerBossWarning() {
 
     if (
         bossSpawned ||
-        bossWarningActive
+        bossWarningActive ||
+        stageBossDefeated
     ) {
         return;
     }
+
+    clearStageTimers();
+    stageMessageTimer = 0;
+    stageMessage = "";
 
     bossWarningActive = true;
 
@@ -74,6 +98,8 @@ function finalizeBossSpawn() {
     bossWarningActive = false;
 
     bossSpawned = true;
+
+    stageBossDefeated = false;
 
     bossShotFrames = 0;
 
@@ -111,8 +137,6 @@ function finalizeBossSpawn() {
         dir: 1
     };
 
-    stageBossDefeated = false;
-
     lastBossHp = boss.hp;
 
     bossFill.style.width =
@@ -123,27 +147,23 @@ function finalizeBossSpawn() {
         12
     );
 
-    setTimeout(() => {
+    try {
 
-        try {
+        if (
+            audioCtx &&
+            audioCtx.state === "running"
+        ) {
 
-            if (
-                audioCtx &&
-                audioCtx.state === "running"
-            ) {
-
-                setBGMMode("boss");
-            }
-
-        } catch (e) {
-
-            console.error(
-                "Boss BGM Error",
-                e
-            );
+            setBGMMode("boss");
         }
 
-    }, 200);
+    } catch (e) {
+
+        console.error(
+            "Boss BGM Error",
+            e
+        );
+    }
 }
 
 /* ==========================
@@ -308,7 +328,7 @@ function updateBoss() {
 
                 for (
                     let k = 0;
-                    k < 8;
+                    k < 5;
                     k++
                 ) {
 
@@ -324,26 +344,28 @@ function updateBoss() {
 
                         "#ff2200",
 
-                        6
+                        5
                     );
                 }
 
                 startShake(
-                    20,
-                    40
+                    16,
+                    30
                 );
 
                 score += 1000;
-
-                stageBossDefeated = true;
 
                 boss = null;
 
                 bullets.length = 0;
                 enemies.length = 0;
                 enemyBullets.length = 0;
+                items.length = 0;
 
                 bossSpawned = false;
+                bossWarningActive = false;
+                warningFrames = 0;
+                bossShotFrames = 0;
 
                 bossContainer.classList.add(
                     "hidden"
@@ -354,8 +376,11 @@ function updateBoss() {
                 );
 
                 /* ==========================
-                   STAGE CLEAR
+                   STAGE CLEAR / GAME CLEAR
                 ========================== */
+
+                stageBossDefeated = true;
+                clearStageTimers();
 
                 if (
                     stage >=
@@ -364,43 +389,66 @@ function updateBoss() {
 
                     showStageMessage(
                         "GAME CLEAR",
-                        180
+                        90
                     );
 
-                    gameClear();
+                    gameClearTimeoutId = setTimeout(() => {
+
+                        gameClearTimeoutId = null;
+
+                        gameClear();
+
+                    }, 1200);
 
                 } else {
 
-                    const nextStage =
-                        stage + 1;
+                    const clearedStage = stage;
+                    const nextStage = stage + 1;
 
                     showStageMessage(
                         "STAGE " +
-                        stage +
+                        clearedStage +
                         " CLEAR",
                         120
                     );
 
                     stage++;
+                    stageBossDefeated = false;
 
-                    updateStageDisplay();
-                    updateStageTheme();
+                    if (typeof enemySpawnFrames !== "undefined") {
+                        enemySpawnFrames = 0;
+                    }
+
                     player.hp =
                         player.maxHp;
 
-                    setTimeout(
-                        () => {
+                    if (typeof lastPlayerHp !== "undefined") {
+                        lastPlayerHp = -1;
+                    }
 
-                            showStageMessage(
-                                "STAGE " +
-                                nextStage +
-                                " START",
-                                90
-                            );
+                    updateStageDisplay();
+                    updateStageTheme();
 
-                        },
-                        2000
-                    );
+                    nextStageMessageTimeoutId = setTimeout(() => {
+
+                        nextStageMessageTimeoutId = null;
+
+                        if (
+                            !gameRunning ||
+                            bossSpawned ||
+                            bossWarningActive
+                        ) {
+                            return;
+                        }
+
+                        showStageMessage(
+                            "STAGE " +
+                            nextStage +
+                            " START",
+                            90
+                        );
+
+                    }, 2000);
                 }
 
                 break;

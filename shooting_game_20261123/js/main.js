@@ -6,6 +6,10 @@ let lastScore = -1;
 
 function finishGame(isClear) {
 
+    if (typeof clearStageTimers === "function") {
+        clearStageTimers();
+    }
+
     setBGMMode("none");
 
     warningFrames = 0;
@@ -15,17 +19,17 @@ function finishGame(isClear) {
 
     if (!isClear) {
 
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 8; i++) {
 
             createExplosion(
                 player.x + player.width / 2,
                 player.y + player.height / 2,
                 "#00ffff",
-                10
+                6
             );
         }
 
-        startShake(18, 35);
+        startShake(14, 28);
     }
 
     saveRanking();
@@ -67,6 +71,10 @@ function gameClear() {
 ========================== */
 
 function startNewRun() {
+
+    if (typeof clearStageTimers === "function") {
+        clearStageTimers();
+    }
 
     unlockAudio();
 
@@ -155,27 +163,11 @@ function update() {
 
 function draw() {
 
-    const grad =
-        ctx.createRadialGradient(
-            canvas.width / 2,
-            canvas.height / 2,
-            0,
-            canvas.width / 2,
-            canvas.height / 2,
-            canvas.width
-        );
+    if (!cachedBgGradient) {
+        rebuildBgGradient();
+    }
 
-    grad.addColorStop(
-        0,
-        stageTheme.bg1
-    );
-
-    grad.addColorStop(
-        1,
-        stageTheme.bg2
-    );
-
-    ctx.fillStyle = grad;
+    ctx.fillStyle = cachedBgGradient || stageTheme.bg1;
 
     ctx.fillRect(
         0,

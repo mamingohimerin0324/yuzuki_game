@@ -12,12 +12,34 @@ function resetEnemies() {
     enemyBullets.length = 0;
 }
 
+function checkBossSpawnCondition() {
+
+    if (
+        !gameRunning ||
+        bossSpawned ||
+        bossWarningActive ||
+        stageBossDefeated
+    ) {
+        return;
+    }
+
+    const targetScore = STAGE_BOSS_SCORE[stage];
+
+    if (
+        typeof targetScore === "number" &&
+        score >= targetScore
+    ) {
+        triggerBossWarning();
+    }
+}
+
 function updateEnemySpawner() {
 
     if (
         !gameRunning ||
         bossSpawned ||
-        warningFrames > 0
+        warningFrames > 0 ||
+        bossWarningActive
     ) {
         return;
     }
@@ -125,20 +147,7 @@ function updateEnemiesAndBullets() {
                     0.06
                 );
 
-                const targetScore =
-                    STAGE_BOSS_SCORE[
-                        stage
-                    ];
-
-                if (
-                    score >= targetScore &&
-                    !bossSpawned &&
-                    !bossWarningActive &&
-                    !stageBossDefeated
-                ) {
-
-                    triggerBossWarning();
-                }
+                checkBossSpawnCondition();
 
                 break;
             }
@@ -289,6 +298,8 @@ function updateEnemiesAndBullets() {
                  * Safari対策
                  */
                 // playSound(900, 0.03);
+
+                checkBossSpawnCondition();
 
                 break;
             }

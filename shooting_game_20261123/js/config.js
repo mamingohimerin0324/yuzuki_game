@@ -27,6 +27,7 @@ let stageMessage = "";
 let stageMessageTimer = 0;
 
 const items = [];
+
 /* ==========================
    MEMORY CLEANUP
 ========================== */
@@ -46,8 +47,6 @@ function cleanupEffects() {
     updateStageDisplay();
 }
 
-
-
 /* ==========================
    SHARED STATE & ARRAYS
 ========================== */
@@ -57,14 +56,15 @@ let gameRunning = false;
 let shakePower = 0;
 let shakeTime = 0;
 const MAX_BULLETS = 40;
-const MAX_EXPLOSIONS = 50;
-const MAX_SHOCKWAVES = 20;
+const MAX_EXPLOSIONS = 36;
+const MAX_SHOCKWAVES = 14;
 const bullets = [];
 const enemies = [];
 const enemyBullets = [];
 const explosions = [];
 const shockwaves = [];
 const stars = [];
+
 /* ==========================
    STAGE SYSTEM
 ========================== */
@@ -93,7 +93,7 @@ const stageDisplay =
     );
 
 /* ==========================
-   STAGE THEME
+   STAGE THEME & GRADIENT CACHE
 ========================== */
 
 let stageTheme = {
@@ -105,17 +105,43 @@ let stageTheme = {
 
     ui: "#00ffff"
 };
+
+let cachedBgGradient = null;
+
+function rebuildBgGradient() {
+
+    if (!ctx || canvas.width <= 0 || canvas.height <= 0) {
+        return;
+    }
+
+    const grad = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        Math.max(canvas.width, canvas.height)
+    );
+
+    grad.addColorStop(0, stageTheme.bg1);
+    grad.addColorStop(1, stageTheme.bg2);
+
+    cachedBgGradient = grad;
+}
+
 /* ==========================
    CANVAS & STARS
 ========================== */
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    rebuildBgGradient();
 }
 
 function initStars() {
     stars.length = 0;
-    for (let i = 0; i < 60; i++) {
+    const starCount = window.innerWidth < 768 ? 40 : 60;
+    for (let i = 0; i < starCount; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -129,26 +155,27 @@ function updateStarsAndEffects() {
     for (let i = shockwaves.length - 1; i >= 0; i--) {
         const s = shockwaves[i];
         s.radius += 6;
-        s.alpha -= 0.04;
+        s.alpha -= 0.05;
         if (s.alpha <= 0) {
             shockwaves.splice(i, 1);
         }
     }
 
-    stars.forEach(star => {
+    for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
         star.x -= star.speed;
         if (star.x < -10) {
             star.x = canvas.width + 10;
             star.y = Math.random() * canvas.height;
         }
-    });
+    }
 
     for (let i = explosions.length - 1; i >= 0; i--) {
         const p = explosions[i];
         p.x += p.dx;
         p.y += p.dy;
         p.life--;
-        p.size *= 0.95;
+        p.size *= 0.94;
         if (p.life <= 0) {
             explosions.splice(i, 1);
         }
@@ -156,21 +183,21 @@ function updateStarsAndEffects() {
 
     if (shakeTime > 0) {
         shakeTime--;
-        shakePower *= 0.92;
-        if (shakePower < 0.1) {
+        shakePower *= 0.9;
+        if (shakePower < 0.2) {
             shakePower = 0;
+            shakeTime = 0;
         }
     }
 }
 
 function drawStarsAndEffects() {
-    stars.forEach(star => {
-        ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = stageTheme.star || "#ffffff";
+    for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
         ctx.globalAlpha = 0.4 + star.speed / 4;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+    }
     ctx.globalAlpha = 1;
 
     ctx.save();
@@ -345,6 +372,7 @@ function setBGMMode(mode) {
         );
     }
 }
+
 function updateBGM() {
 
     if (
@@ -388,6 +416,7 @@ function updateBGM() {
         now + 0.05
     );
 }
+
 /* ==========================
    ASSETS & EFFECTS & RANKING
 ========================== */
@@ -419,6 +448,7 @@ async function loadAssets() {
     images.boss = await loadImageAndCache("assets/svg/boss.svg", 240, 200);
     images.bullet = await loadImageAndCache("assets/svg/bullet.svg", 20, 12);
 }
+
 function updateStageDisplay() {
 
     if (!stageDisplay) {
@@ -436,6 +466,7 @@ function updateStageDisplay() {
             "STAGE " + stage;
     }
 }
+
 function updateStageTheme() {
 
     switch (stage) {
@@ -494,13 +525,16 @@ function updateStageTheme() {
                 ui: "#ffaa00"
             };
     }
+
+    rebuildBgGradient();
 }
+
 function startShake(power, duration) {
     shakePower = Math.max(shakePower, power);
     shakeTime = Math.max(shakeTime, duration);
 }
 
-function createExplosion(x, y, color = "#ff9900", count = 12) {
+function createExplosion(x, y, color = "#ff9900", count = 8) {
     for (let i = 0; i < count; i++) {
         if (explosions.length >= MAX_EXPLOSIONS) {
             explosions.shift();
@@ -510,34 +544,34 @@ function createExplosion(x, y, color = "#ff9900", count = 12) {
             y,
             dx: (Math.random() - 0.5) * 8,
             dy: (Math.random() - 0.5) * 8,
-            size: Math.random() * 7 + 3,
-            life: 24,
+            size: Math.random() * 6 + 3,
+            life: 20,
             color
         });
     }
 }
 
 function drawExplosionsAndShockwaves() {
-    explosions.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.life / 24);
+    for (let i = 0; i < explosions.length; i++) {
+        const p = explosions[i];
+        ctx.globalAlpha = Math.max(0, p.life / 20);
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
-    });
+    }
 
-    shockwaves.forEach(s => {
-        ctx.save();
+    for (let i = 0; i < shockwaves.length; i++) {
+        const s = shockwaves[i];
         ctx.globalAlpha = Math.max(0, s.alpha);
         ctx.strokeStyle = "#ffff88";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.restore();
-    });
+    }
+
+    ctx.globalAlpha = 1;
 }
 
 function hit(a, b) {
@@ -581,6 +615,11 @@ function saveRanking() {
 resizeCanvas();
 initStars();
 updateStageDisplay();
+
+function getBannerFontSize() {
+    return Math.max(36, Math.min(64, Math.floor(canvas.width * 0.08)));
+}
+
 function drawWarningMessage() {
 
     if (!bossWarningActive) {
@@ -602,11 +641,11 @@ function drawWarningMessage() {
     ctx.textAlign = "center";
 
     ctx.font =
-        "bold 72px Arial";
+        "bold " + getBannerFontSize() + "px Arial";
 
     ctx.strokeStyle = "#ffffff";
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 2;
 
     const text =
         stage >= MAX_STAGE
@@ -627,11 +666,13 @@ function drawWarningMessage() {
 
     ctx.restore();
 }
+
 function showStageMessage(text, frames = 120) {
 
     stageMessage = text;
     stageMessageTimer = frames;
 }
+
 function drawStageMessage() {
 
     if (stageMessageTimer <= 0) {
@@ -655,11 +696,11 @@ function drawStageMessage() {
     ctx.textAlign = "center";
 
     ctx.font =
-        "bold 72px Arial";
+        "bold " + getBannerFontSize() + "px Arial";
 
     ctx.strokeStyle = "#00ffff";
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 2;
 
     ctx.strokeText(
         stageMessage,
