@@ -3,20 +3,26 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
     <title>ゆづきゲーム</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 </head>
 
 <body>
 
     <!-- タイトル画面 -->
-
     <div id="titleScreen">
 
-        <h1>🎮 ゆづきゲーム 🎮</h1>
+        <h1>
+            🎮 ゆづきゲーム 🎮
+        </h1>
 
         <div>
             ハイスコア :
@@ -30,66 +36,71 @@
     </div>
 
     <!-- WARNING -->
-
-    <div id="warning" class="hidden">
-
+    <div
+        id="warning"
+        class="hidden"
+    >
         ⚠ WARNING ⚠
-
     </div>
 
     <!-- HUD -->
-
     <div id="hud">
 
         <div id="score">
             0
         </div>
 
+        <!-- 追加 -->
+        <div id="stageDisplay">
+            STAGE 1
+        </div>
+
         <div id="hpContainer">
-
             <div id="hpFill"></div>
-
         </div>
 
     </div>
 
     <!-- ボスHP -->
-
-    <div id="bossContainer" class="hidden">
-
+    <div
+        id="bossContainer"
+        class="hidden"
+    >
         <div id="bossFill"></div>
-
     </div>
 
     <!-- ランキング -->
-
     <div id="ranking">
 
-        <h3>RANKING</h3>
+        <h3>
+            RANKING
+        </h3>
 
         <ol id="rankingList"></ol>
 
     </div>
 
     <!-- ゲームキャンバス -->
-
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 操作パッド -->
+    <!-- モバイル操作パッド -->
+    <div id="mobilePad">
 
-<div id="mobilePad">
+        <div id="joystick">
+            <div id="stick"></div>
+        </div>
 
-    <div id="joystick">
-        <div id="stick"></div>
+        <button id="fireBtn">
+            FIRE
+        </button>
+
     </div>
 
-    <button id="fireBtn">FIRE</button>
-
-</div>
-
     <!-- GAME OVER -->
-
-    <div id="gameOver" class="hidden">
+    <div
+        id="gameOver"
+        class="hidden"
+    >
 
         <h2>
             💥 GAME OVER 💥
@@ -106,8 +117,10 @@
     </div>
 
     <!-- GAME CLEAR -->
-
-    <div id="clearScreen" class="hidden">
+    <div
+        id="clearScreen"
+        class="hidden"
+    >
 
         <h2>
             🎉 GAME CLEAR 🎉
@@ -122,6 +135,8 @@
         </button>
 
     </div>
+
+    <!-- JS -->
 
     <script src="js/config.js"></script>
     <script src="js/player.js"></script>
