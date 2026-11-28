@@ -1,9 +1,10 @@
 /* ==========================
    BOSS
 ========================== */
-let stageBossDefeated = false;
-let boss = null;
 
+let stageBossDefeated = false;
+
+let boss = null;
 let bossSpawned = false;
 let bossWarningActive = false;
 
@@ -14,10 +15,15 @@ const MAX_ENEMY_BULLETS = 50;
 
 let lastBossHp = -1;
 
-function resetBossState() {
-    stageBossDefeated = false;
-    boss = null;
+/* ==========================
+   RESET
+========================== */
 
+function resetBossState() {
+
+    stageBossDefeated = false;
+
+    boss = null;
     bossSpawned = false;
     bossWarningActive = false;
 
@@ -26,24 +32,42 @@ function resetBossState() {
 
     lastBossHp = -1;
 
-    bossContainer.classList.add("hidden");
+    bullets.length = 0;
+    enemyBullets.length = 0;
+
+    bossContainer.classList.add(
+        "hidden"
+    );
 
     bossFill.style.width = "100%";
 }
 
+/* ==========================
+   WARNING
+========================== */
+
 function triggerBossWarning() {
 
-    if (bossSpawned) return;
-
-    if (bossWarningActive) return;
+    if (
+        bossSpawned ||
+        bossWarningActive
+    ) {
+        return;
+    }
 
     bossWarningActive = true;
 
     warningFrames = 60;
 
+    /* 安全のため全部クリア */
+    bullets.length = 0;
     enemies.length = 0;
     enemyBullets.length = 0;
 }
+
+/* ==========================
+   BOSS SPAWN
+========================== */
 
 function finalizeBossSpawn() {
 
@@ -53,7 +77,9 @@ function finalizeBossSpawn() {
 
     bossShotFrames = 0;
 
-    bossContainer.classList.remove("hidden");
+    bossContainer.classList.remove(
+        "hidden"
+    );
 
     const bossHp =
         STAGE_BOSS_HP[stage];
@@ -78,22 +104,36 @@ function finalizeBossSpawn() {
 
         speed:
             3 +
-            (stage - 1) * 0.5,
+            (
+                stage - 1
+            ) * 0.5,
 
         dir: 1
     };
 
-    lastBossHp = boss.hp;
     stageBossDefeated = false;
-    bossFill.style.width = "100%";
 
-    startShake(6, 12);
+    lastBossHp = boss.hp;
+
+    bossFill.style.width =
+        "100%";
+
+    startShake(
+        6,
+        12
+    );
 
     setTimeout(() => {
 
         try {
 
-            setBGMMode("boss");
+            if (
+                audioCtx &&
+                audioCtx.state === "running"
+            ) {
+
+                setBGMMode("boss");
+            }
 
         } catch (e) {
 
@@ -106,16 +146,23 @@ function finalizeBossSpawn() {
     }, 200);
 }
 
+/* ==========================
+   WARNING COUNTDOWN
+========================== */
+
 function updateWarningCountdown() {
 
-    if (warningFrames <= 0) {
-
+    if (
+        warningFrames <= 0
+    ) {
         return false;
     }
 
     warningFrames--;
 
-    if (warningFrames === 0) {
+    if (
+        warningFrames === 0
+    ) {
 
         finalizeBossSpawn();
     }
@@ -123,13 +170,17 @@ function updateWarningCountdown() {
     return true;
 }
 
+/* ==========================
+   UPDATE
+========================== */
+
 function updateBoss() {
 
-    if (!boss) return;
+    if (!boss) {
+        return;
+    }
 
-    /* ==========================
-       MOVE
-    ========================== */
+    /* 移動 */
 
     boss.y +=
         boss.speed *
@@ -137,23 +188,25 @@ function updateBoss() {
 
     if (
         boss.y < 0 ||
-        boss.y + boss.height >
+        boss.y +
+        boss.height >
         canvas.height
     ) {
 
         boss.dir *= -1;
     }
 
-    /* ==========================
-       SHOT
-    ========================== */
+    /* 発射 */
 
     bossShotFrames++;
 
     const shotInterval =
         Math.max(
             25,
-            60 - (stage - 1) * 8
+            60 -
+            (
+                stage - 1
+            ) * 8
         );
 
     if (
@@ -169,11 +222,15 @@ function updateBoss() {
 
             spread = 3;
 
-        } else if (stage === 3) {
+        } else if (
+            stage === 3
+        ) {
 
             spread = 4;
 
-        } else if (stage === 4) {
+        } else if (
+            stage >= 4
+        ) {
 
             spread = 5;
         }
@@ -210,9 +267,7 @@ function updateBoss() {
         }
     }
 
-    /* ==========================
-       PLAYER BULLET HIT
-    ========================== */
+    /* 弾命中 */
 
     for (
         let bi =
@@ -221,9 +276,16 @@ function updateBoss() {
         bi--
     ) {
 
+        const bullet =
+            bullets[bi];
+
+        if (!bullet) {
+            continue;
+        }
+
         if (
             hit(
-                bullets[bi],
+                bullet,
                 boss
             )
         ) {
@@ -240,7 +302,9 @@ function updateBoss() {
                 4
             );
 
-            if (boss.hp <= 0) {
+            if (
+                boss.hp <= 0
+            ) {
 
                 for (
                     let k = 0;
@@ -269,19 +333,21 @@ function updateBoss() {
                     40
                 );
 
-                score +=
-                    stage * 2000;
+                score += 1000;
+
+                stageBossDefeated = true;
 
                 boss = null;
-                stageBossDefeated = true;
+
+                bullets.length = 0;
+                enemies.length = 0;
+                enemyBullets.length = 0;
+
+                bossSpawned = false;
 
                 bossContainer.classList.add(
                     "hidden"
                 );
-
-                enemyBullets.length = 0;
-
-                bossSpawned = false;
 
                 setBGMMode(
                     "normal"
@@ -292,7 +358,8 @@ function updateBoss() {
                 ========================== */
 
                 if (
-                    stage >= MAX_STAGE
+                    stage >=
+                    MAX_STAGE
                 ) {
 
                     showStageMessage(
@@ -321,28 +388,27 @@ function updateBoss() {
                     player.hp =
                         player.maxHp;
 
-                    enemyBullets.length = 0;
-                    enemies.length = 0;
+                    setTimeout(
+                        () => {
 
-                    setTimeout(() => {
+                            showStageMessage(
+                                "STAGE " +
+                                nextStage +
+                                " START",
+                                90
+                            );
 
-                        showStageMessage(
-                            "STAGE " +
-                            nextStage +
-                            " START",
-                            90
-                        );
-
-                    }, 2000);
+                        },
+                        2000
+                    );
                 }
+
                 break;
             }
         }
     }
 
-    /* ==========================
-       HP BAR UPDATE
-    ========================== */
+    /* HP BAR */
 
     if (
         boss &&
@@ -357,28 +423,28 @@ function updateBoss() {
             (
                 boss.hp /
                 boss.maxHp
-            ) *
-            100 +
-            "%";
+            ) * 100 + "%";
     }
 }
+
+/* ==========================
+   DRAW
+========================== */
 
 function drawBoss() {
 
     if (
-        boss &&
-        images.boss
+        !boss ||
+        !images.boss
     ) {
-
-        ctx.drawImage(
-
-            images.boss,
-
-            boss.x,
-            boss.y,
-
-            boss.width,
-            boss.height
-        );
+        return;
     }
+
+    ctx.drawImage(
+        images.boss,
+        boss.x,
+        boss.y,
+        boss.width,
+        boss.height
+    );
 }

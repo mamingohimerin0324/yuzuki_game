@@ -8,9 +8,8 @@ function finishGame(isClear) {
 
     setBGMMode("none");
 
-    warningFrames = 30;
-
-    warningEl?.classList.add("hidden");
+    warningFrames = 0;
+    bossWarningActive = false;
 
     gameRunning = false;
 
@@ -71,15 +70,14 @@ function startNewRun() {
 
     unlockAudio();
 
-    items.length = 0;
-
-    weaponLevel = 1;
-
     score = 0;
-
     stage = 1;
 
     lastScore = -1;
+
+    items.length = 0;
+
+    weaponLevel = 1;
 
     titleScreen.classList.add(
         "hidden"
@@ -112,15 +110,8 @@ function startNewRun() {
 
 function update() {
 
-    /*
-     * 背景・エフェクトは
-     * 常時更新
-     */
     updateStarsAndEffects();
 
-    /*
-     * WARNING演出中
-     */
     if (
         updateWarningCountdown()
     ) {
@@ -141,9 +132,6 @@ function update() {
 
     updateBoss();
 
-    /*
-     * SCORE更新最適化
-     */
     if (
         score !== lastScore
     ) {
@@ -153,14 +141,8 @@ function update() {
         lastScore = score;
     }
 
-    /*
-     * STAGE表示更新
-     */
     updateStageDisplay();
 
-    /*
-     * GAME OVER
-     */
     if (player.hp <= 0) {
 
         gameOver();
@@ -189,7 +171,13 @@ function draw() {
     drawItems();
 
     drawBoss();
+
+    /* WARNING演出 */
+    drawWarningMessage();
+
+    /* STAGE演出 */
     drawStageMessage();
+
     drawExplosionsAndShockwaves();
 
     endShakeTransform();
@@ -298,10 +286,13 @@ function drawItems() {
 
     items.forEach(item => {
 
+        if (!item) {
+            return;
+        }
+
         ctx.save();
 
-        ctx.fillStyle =
-            "#ffff00";
+        ctx.fillStyle = "#ffff00";
 
         ctx.beginPath();
 
@@ -315,8 +306,7 @@ function drawItems() {
 
         ctx.fill();
 
-        ctx.fillStyle =
-            "#000";
+        ctx.fillStyle = "#000";
 
         ctx.font =
             "bold 16px Arial";
